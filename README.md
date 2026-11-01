@@ -1,236 +1,262 @@
-# zmk-driver-psp-joystick-with-custom-studio-rpc
+# PSP Joystick ZMK Driver with Custom Studio RPC
 
-![ZMK Version](https://img.shields.io/badge/ZMK-master-blue)
-[![Test](https://github.com/tokyo2006/zmk-driver-psp-joystick-with-custom-studio-rpc/actions/workflows/zmk-module.yml/badge.svg?branch=main)](https://github.com/tokyo2006/zmk-driver-psp-joystick-with-custom-studio-rpc/actions/workflows/zmk-module.yml) [![Devcontainer](https://github.com/tokyo2006/zmk-driver-psp-joystick-with-custom-studio-rpc/actions/workflows/devcontainer.yml/badge.svg?branch=main)](https://github.com/tokyo2006/zmk-driver-psp-joystick-with-custom-studio-rpc/actions/workflows/devcontainer.yml)
+A ZMK module that turns a two-potentiometer PSP-1000/2000/3000 analog
+thumbstick into a pointing device. The stick moves the mouse pointer, a layer
+can turn it into a scroll wheel, and DYA Studio can tune and recalibrate it at
+runtime through a custom RPC subsystem.
 
-This repository contains a template for a ZMK module with Web UI using the **unofficial** custom ZMK Studio RPC protocol.
+## Features
 
-It's extended from ZMK official template with [zmk-west-commands](https://github.com/cormoran/zmk-west-commands), test code template, coding agent support, and custom Studio RPC protocol support.
+- Two-channel ADC sampling at 125 Hz (configurable 4-50 ms).
+- Boot-time auto-center calibration with a still-stick sanity check.
+- Studio-triggered manual calibration for central/unibody builds.
+- Runtime deadzone, response curve, speed, smoothing, invert, and swap.
+- Persistent settings through `cormoran/zmk-feature-custom-settings`.
+- Layer-triggered scrolling using upstream ZMK input processors.
+- Split support: the stick can live on the central or a peripheral half.
+- No web UI dependency; the firmware exposes a custom Studio RPC subsystem.
 
-## Summary
+## Required ZMK
 
-This template includes:
+This module targets `cormoran/zmk` with the custom Studio RPC protocol:
 
-- **Firmware**: Sample custom Studio RPC handler (`src/studio/psp_joystick_handler.c`)
-- **Protocol**: Protobuf definition (`proto/tokyo2006/psp-joystick/psp_joystick.proto`)
-- **Web UI**: React + TypeScript app (`web/`) using [@cormoran/zmk-studio-react-hook](https://github.com/cormoran/react-zmk-studio)
-- **Tests**: Firmware unit tests (`tests/studio/`) and build tests (`tests/zmk-config/`)
-
-Read through the [ZMK Module Creation](https://zmk.dev/docs/development/module-creation) page for details on how to configure this template.
-
-## More Info
-
-For more info on modules, you can read through through the [Zephyr modules page](https://docs.zephyrproject.org/3.5.0/develop/modules.html) and [ZMK's page on using modules](https://zmk.dev/docs/features/modules). [Zephyr's west manifest page](https://docs.zephyrproject.org/3.5.0/develop/west/manifest.html#west-manifests) may also be of use.
-
-## Module User Guide
-
-1. Add dependency to your `config/west.yml`. Note: this module requires a patched ZMK with custom Studio RPC support.
-
-   ```yml
-   manifest:
-       remotes:
-           ...
-           - name: cormoran
-           url-base: https://github.com/cormoran
-       projects:
-           ...
-           - name: zmk-driver-psp-joystick-with-custom-studio-rpc
-           remote: cormoran
-           revision: main+custom-studio-protocol # or latest commit hash
-           import: true
-           ...
-           # Required: patched ZMK with custom Studio RPC support
-           - name: zmk
-           remote: cormoran
-           revision: main+custom-studio-protocol
-           import:
-               file: app/west.yml
-   ```
-
-2. Enable flags in your `config/<shield>.conf`
-
-   ```conf
-   CONFIG_ZMK_PSP_JOYSTICK=y
-
-   # Optionally enable custom Studio RPC
-   CONFIG_ZMK_STUDIO=y
-   CONFIG_ZMK_PSP_JOYSTICK_STUDIO_RPC=y
-   CONFIG_ZMK_CUSTOM_SETTINGS=y
-   CONFIG_ZMK_CUSTOM_SETTINGS_STUDIO_RPC=y
-   CONFIG_ZMK_STUDIO_RPC_RX_BUF_SIZE=128
-   CONFIG_ZMK_LOW_PRIORITY_THREAD_STACK_SIZE=2048
-   ```
-
-3. Implement your custom protocol by editing:
-   - `proto/tokyo2006/psp-joystick/psp_joystick.proto` — message types
-   - `src/studio/psp_joystick_handler.c` — firmware RPC handler
-   - `web/src/App.tsx` — web UI
-
-### Web UI
-
-See [web/README.md](./web/README.md) for web UI development instructions.
-
-### Publishing Web UI
-
-**GitHub Pages**: Merge a pull request into `main+custom-studio-protocol` to deploy to `https://<account>.github.io/<repo>/`.
-
-**Cloudflare Workers (PR previews)**: Configure `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets. Previews are optional — when the secrets are absent (e.g. a fresh repo created from this template), the workflow stays green and simply comments on the PR explaining how to enable them instead of deploying.
-
-## Module Development Guide
-
-### Initialize from template
-
-Right after creating a repository from this template, run the initialization
-script and follow the checklist in [AGENTS.md](./AGENTS.md):
-
-```bash
-python3 scripts/init_module.py --namespace <your-github-name> --module <feature-name>
+```yaml
+manifest:
+  remotes:
+    - name: cormoran
+      url-base: https://github.com/cormoran
+    - name: tokyo2006
+      url-base: https://github.com/tokyo2006
+  projects:
+    - name: zmk
+      remote: cormoran
+      revision: main+custom-studio-protocol
+      import:
+        file: app/west.yml
+    - name: zmk-driver-psp-joystick-with-custom-studio-rpc
+      remote: tokyo2006
+      revision: main
+      import: true
 ```
 
-It replaces every template placeholder (identifiers, paths, URLs, artifact
-names) and verifies nothing is left (`--verify-only` re-checks at any time).
+Enable the module in your `config/<shield>.conf`:
 
-### Setup for running test
+```conf
+CONFIG_INPUT=y
+CONFIG_ADC=y
+CONFIG_ADC_NRFX_SAADC=y
+CONFIG_ZMK_POINTING=y
+CONFIG_ZMK_PSP_JOYSTICK=y
 
-#### Option0: Dev container (recommended)
+# Optional: custom Studio RPC
+CONFIG_ZMK_STUDIO=y
+CONFIG_ZMK_PSP_JOYSTICK_STUDIO_RPC=y
+CONFIG_ZMK_CUSTOM_SETTINGS=y
+CONFIG_ZMK_CUSTOM_SETTINGS_STUDIO_RPC=y
+CONFIG_ZMK_STUDIO_RPC_RX_BUF_SIZE=128
+CONFIG_ZMK_LOW_PRIORITY_THREAD_STACK_SIZE=2048
 
-Open this repository in VS Code with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers). The container automatically initializes the west workspace using the isolated layout.
-
-#### Option1: west workspace directory layout
-
-Set west topdir as parent of repository root and download dependencies under `../`.
-This layout is useful to reduce disk usage by sharing dependencies with other zephyr modules.
-The build result is located in `../build`.
-
-```bash
-mkdir west-workspace
-cd west-workspace # this directory becomes west workspace root (topdir)
-git clone <this repository>
-# rm -r .west # if exists to reset workspace
-west init -l . --mf west/west-test-workspace.yml
-west update --narrow
-west zephyr-export
+# Optional: split relay (both halves)
+CONFIG_ZMK_SPLIT_RELAY_EVENT=y
+CONFIG_ZMK_PSP_JOYSTICK_SPLIT_RELAY=y
 ```
 
-#### Option2: isolated directory layout
+## Wiring
 
-Set west topdir as repository root and download dependencies under `./dependencies`.
-This layout is useful if you don't want to share dependencies to other zephyr modules.
-Dev container and github actions uses this layout.
-The build result is located in `./build`.
+The common PSP thumbstick has four pads: two potentiometer wipers (X and Y)
+and a shared VCC/GND pair.
+
+| Stick pad | Connect to |
+|---|---|
+| X | an nRF52840 AIN pin configured as an ADC channel |
+| Y | a second AIN pin configured as an ADC channel |
+| VCC | the same 3.3 V rail used by the MCU |
+| GND | GND |
+
+Power the potentiometers from the same 3.3 V rail. The nRF52840 SAADC must use
+`ADC_GAIN_1_6` with the internal 0.6 V reference so the full 3.3 V swing is in
+range (6 × 0.6 V = 3.6 V). The measurements are ratiometric; do not power the
+stick from a different rail than the one the ADC range assumes.
+
+## Device Tree
+
+### Unibody or central-installed stick
+
+```dts
+#include <zephyr/dt-bindings/adc/adc.h>
+#include <zephyr/dt-bindings/adc/nrf-adc.h>
+#include <tokyo2006/psp_joystick.dtsi>
+
+&adc {
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+
+    channel@0 {
+        reg = <0>;
+        zephyr,gain = "ADC_GAIN_1_6";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,input-positive = <NRF_SAADC_AIN0>;
+        zephyr,resolution = <12>;
+    };
+
+    channel@1 {
+        reg = <1>;
+        zephyr,gain = "ADC_GAIN_1_6";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,input-positive = <NRF_SAADC_AIN1>;
+        zephyr,resolution = <12>;
+    };
+};
+
+/ {
+    psp_joystick: psp_joystick {
+        compatible = "tokyo2006,psp-joystick";
+        io-channels = <&adc 0>, <&adc 1>;
+        io-channel-names = "x", "y";
+        deadzone-percent = <8>;
+        max-speed = <8>;
+        curve-exponent-x100 = <100>;
+        /* invert-x; */
+        /* invert-y; */
+        /* swap-xy; */
+    };
+
+    psp_joystick_listener: psp_joystick_listener {
+        compatible = "zmk,input-listener";
+        device = <&psp_joystick>;
+    };
+};
+```
+
+### Stick on a split peripheral
+
+Shared `.dtsi` included by both halves:
+
+```dts
+#include <tokyo2006/psp_joystick.dtsi>
+
+/ {
+    split_inputs {
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+        psp_joystick_split: psp_joystick_split@0 {
+            compatible = "zmk,input-split";
+            reg = <0>;
+        };
+    };
+
+    psp_joystick_listener: psp_joystick_listener {
+        compatible = "zmk,input-listener";
+        status = "disabled";
+        device = <&psp_joystick_split>;
+    };
+};
+```
+
+Peripheral overlay:
+
+```dts
+#include "<keyboard>.dtsi"
+
+&psp_joystick_split {
+    device = <&psp_joystick>;
+};
+```
+
+Central overlay:
+
+```dts
+#include "<keyboard>.dtsi"
+
+&psp_joystick_listener {
+    status = "okay";
+};
+```
+
+The `psp_joystick` node itself (ADC channels plus the `tokyo2006,psp-joystick`
+node) goes in the peripheral overlay. The central only needs the listener and
+the split proxy node.
+
+## Scroll Layer
+
+Add a layer override to the listener. On the scroll layer, the code mapper
+turns X/Y into horizontal/vertical wheel and the scaler sets the step size:
+
+```dts
+#include <tokyo2006/psp_joystick.dtsi>
+
+&psp_joystick_listener {
+    scroll {
+        layers = <SCROLL>;
+        input-processors = <&psp_scroll_map>, <&psp_scroll_scale 1 24>;
+    };
+};
+```
+
+Because the override does not set `process-next`, it replaces the base
+processors, so the pointer does not move while scrolling. Increase the second
+scaler cell (`24`) to scroll faster; decrease it to scroll slower.
+
+## Studio RPC
+
+Subsystem identifier: `tokyo2006__psp_joystick`.
+
+| Field | Range | Meaning |
+|---|---|---|
+| `deadzone_percent` | 0-50 | Deadzone as a percentage of full deflection |
+| `max_speed` | 1-64 | REL units per sample at full deflection |
+| `curve_exponent_x100` | 100/150/200/250/300 | Linear, 1.5, quadratic, 2.5, cubic |
+| `smoothing_percent` | 0-90 | EMA weight of the new sample |
+| `sample_interval_ms` | 4-50 | Sampling period |
+| `invert_x`, `invert_y`, `swap_xy` | bool | Axis transforms |
+| `center_x`, `center_y` | 0-4095 | Raw ADC center |
+| `min_x`, `max_x`, `min_y`, `max_y` | 0-4095 | Raw ADC range |
+
+Requests: `GetState`, `SetState` (with `persist`), `Calibrate` (with `persist`),
+and `Reset` (with `factory_defaults`).
+
+`Calibrate` reads the last 16 samples without blocking. Release the stick
+before calibrating; if it is moving, the request fails with
+`"joystick is moving; release it and retry"`.
+
+## Calibration and Persistence
+
+- On first boot without a persisted center, the driver collects a 500 ms
+  window, rejects the measurement if the stick is moving or far from the DT
+  expected center, and otherwise uses the median as the center.
+- When custom settings are enabled and a center was persisted, boot-time
+  auto-centering is skipped.
+- `SetState(persist=true)` and `Calibrate(persist=true)` write every field.
+- `Reset(factory_defaults=true)` erases the persisted records.
+
+## Split Limitation
+
+Manual `Calibrate` requires a local ADC device. If the stick is on a split
+peripheral, the central cannot measure it synchronously inside an RPC call, so
+`Calibrate` returns:
+
+```text
+calibration requires a local device; the split peripheral auto-centers at boot
+```
+
+The peripheral still auto-centers at boot, and every other setting relays from
+the central normally.
+
+## Testing
 
 ```bash
-git clone <this repository>
-cd <cloned directory>
-# Idempotent helper shared with the devcontainer and CI: runs
-# `west init -l west --mf west-test-isolated.yml`, `west update --narrow`,
-# and `west zephyr-export`.
+# Host math tests (any machine with a C compiler)
+python3 -m unittest test_math
+
+# Firmware build tests (needs an initialized west workspace)
 bash scripts/setup_workspace.sh
+python3 -m unittest test
 ```
 
-### Pre-commit
+## License
 
-Every commit need to pass pre-commit verification. The verification contains formatting code and running tests.
-
-```
-pip install pre-commit
-pre-commit install
-
-# Run pre-commit manually
-pre-commit run --all-files
-# Run for git staged files
-pre-commit run
-```
-
-### Running Test
-
-```bash
-# Run unit test + build test and verify the results
-python3 -m unittest
-# Run build test directly
-west zmk-build tests/zmk-config
-# Run unit test directly
-west zmk-test tests -m .
-# Run web tests
-cd web && npm test
-```
-
-### Hardware-free Renode testing
-
-CI boots the firmware in the [Renode](https://renode.io/) emulator (a `Build`
-job step) and runs `tests/renode/` -- `renode_test.py` is the file a module
-built from this template rewrites for its own RPC surface. It uses
-`west zmk-renode-test`'s **`wired-split`** mode: a wired split pair whose central
-answers Studio RPC over the emulated **USB CDC** while the wired split link
-forwards key events, covering both the central-only Studio path and the split
-path. The ELFs are the `usb_wired_central` / `usb_wired_peripheral` artifacts in
-`tests/zmk-config/build.yaml`. Locally:
-
-```bash
-west zmk-build tests/zmk-config -af usb_wired_central
-west zmk-build tests/zmk-config -af usb_wired_peripheral
-west zmk-renode-test tests/renode --mode wired-split \
-    --elf build/usb_wired_central/zephyr/zmk.elf \
-    --peripheral-elf build/usb_wired_peripheral/zephyr/zmk.elf
-```
-
-The module's own split-relay *sample* (the central forwarding a value to the
-peripheral) is not exercised here -- ZMK's relay-over-wired transport is newer
-than this repo's pinned zmk, so it is covered by the BabbleSim BLE test instead
-(see below). Details (the mode + `ZMK_RENODE_*` env contract): see
-[zmk-west-commands' README, `west zmk-renode-test`](https://github.com/cormoran/zmk-west-commands#west-zmk-renode-test)
-and [docs/renode-testing.md](https://github.com/cormoran/zmk-west-commands/blob/main/docs/renode-testing.md).
-
-### Web UI end-to-end testing
-
-`web/e2e/` runs the **web UI itself**, in a headless browser, against this
-module's **real firmware** in Renode -- no hardware (CI's `Web UI E2E Test`
-workflow). `west zmk-web-e2e` boots the DUT, serves its Studio RPC (over the
-emulated USB CDC) to the browser and hands the test a `navigator.serial` shim,
-so the app, its transport, the RPC framing and the firmware are all real -- only
-the browser's serial driver is faked. `rpc.spec.ts` connects through the app's
-own button and round-trips the module's custom RPC; rewrite its assertions for
-your own requests. Locally:
-
-```bash
-west zmk-build tests/zmk-config -af web_e2e
-west zmk-web-e2e --elf build/web_e2e/zephyr/zmk.elf -- npm --prefix web run e2e
-```
-
-The DUT (the `web_e2e` artifact) is the real `studio-rpc-usb-uart` image with
-Studio locking off -- an emulator has no key to press `&studio_unlock` with.
-Details (the shim's permission model, the `ZMK_WEB_E2E_*` env contract,
-debugging): see
-[zmk-west-commands' docs/zmk-web-e2e.md](https://github.com/cormoran/zmk-west-commands/blob/main/docs/zmk-web-e2e.md).
-
-### Running BLE (BabbleSim) tests
-
-`tests/ble/` runs real `nrf52_bsim` firmware on a simulated radio (x86 Linux
-only; CI's `ble-test` job). The one case, `studio/custom-rpc-split`, checks --
-in a split central+peripheral topology -- that the custom Studio RPC answers
-over the BLE GATT transport while the split link is active, AND that the
-split-relay sample delivers the RPC value to the peripheral (asserted via the
-peripheral's log line). The Studio host side is one declarative
-`studio_requests.json` -- no host C code in this module. Locally:
-
-```bash
-west zmk-ble-test tests/ble -m .   # --auto-accept regenerates snapshots
-```
-
-Details (case-file conventions, JSON DSL, `{prefix}`/`{studio_host}`,
-BabbleSim setup, peripheral assertion): see
-[zmk-west-commands' README, `west zmk-ble-test`](https://github.com/cormoran/zmk-west-commands#west-zmk-ble-test).
-
-### Sync changes from template
-
-Run `Actions > Sync Changes in Template > Run workflow` to get the latest template changes as a pull request.
-
-If the template contains changes in `.github/workflows/*`, register a GitHub personal access token as `GH_TOKEN` repository secret (`repo` + `workflow` scopes).
-
-### Coding agent on actions
-
-Actions for github copilot and claude are available.
-
-- Mention `@copilot`
-- Setup `ANTHROPIC_API_KEY` secret and mention `@claude`
-  - Or fix [claude.yml](./github/workflows/claude.yml) to use `CLAUDE_CODE_OAUTH_TOKEN`
+MIT
