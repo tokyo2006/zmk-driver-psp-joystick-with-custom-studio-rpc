@@ -16,8 +16,10 @@ include:
     cmake-args: -DCONFIG_ZMK_PSP_JOYSTICK=y -DCONFIG_ZMK_POINTING=y -DCONFIG_ZMK_STUDIO=y -DCONFIG_ZMK_PSP_JOYSTICK_STUDIO_RPC=y -DCONFIG_ZMK_CUSTOM_SETTINGS=y -DCONFIG_ZMK_CUSTOM_SETTINGS_STUDIO_RPC=y
     snippet: studio-rpc-usb-uart
 
+  # ZMK's relay-event send is implemented only by the BLE split transport
+  # (fffa339 has no wired relay), so this artifact is a BLE split central.
   - artifact: psp_joystick_split_central
     board: xiao_ble//zmk
-    shield: renode_usb_wired_split
-    cmake-args: -DCONFIG_INPUT=y -DCONFIG_ADC=y -DCONFIG_ADC_NRFX_SAADC=y -DCONFIG_ZMK_POINTING=y -DCONFIG_ZMK_PSP_JOYSTICK=y -DCONFIG_ZMK_PSP_JOYSTICK_SPLIT_RELAY=y -DCONFIG_ZMK_SPLIT_RELAY_EVENT=y -DCONFIG_ZMK_STUDIO=y -DCONFIG_ZMK_PSP_JOYSTICK_STUDIO_RPC=y
+    shield: tester_xiao
+    cmake-args: -DCONFIG_ZMK_BLE=y -DCONFIG_INPUT=y -DCONFIG_ADC=y -DCONFIG_ADC_NRFX_SAADC=y -DCONFIG_ZMK_POINTING=y -DCONFIG_ZMK_PSP_JOYSTICK=y -DCONFIG_ZMK_SPLIT=y -DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=y -DCONFIG_ZMK_PSP_JOYSTICK_SPLIT_RELAY=y -DCONFIG_ZMK_SPLIT_RELAY_EVENT=y -DCONFIG_ZMK_STUDIO=y -DCONFIG_ZMK_PSP_JOYSTICK_STUDIO_RPC=y
     snippet: studio-rpc-usb-uart
