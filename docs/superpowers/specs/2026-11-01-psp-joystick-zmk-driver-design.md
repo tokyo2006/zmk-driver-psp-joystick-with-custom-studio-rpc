@@ -146,7 +146,7 @@ Optional:
 - `invert-x` (bool, default false)
 - `invert-y` (bool, default false)
 - `swap-xy` (bool, default false)
-- `auto-center` (bool, default true)
+- `auto-center` (int, default 1, enum 0/1; 0 disables boot auto-centering)
 - `auto-center-ms` (int, default 500, range 100–2000)
 - `center-x`, `center-y`, `min-x`, `max-x`, `min-y`, `max-y` (int, optional raw
   ADC values; used as fallback and as the expected midpoint check)
