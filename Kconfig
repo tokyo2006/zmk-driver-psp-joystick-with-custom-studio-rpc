@@ -17,7 +17,11 @@ config ZMK_PSP_JOYSTICK_STUDIO_RPC
 
 config ZMK_PSP_JOYSTICK_SPLIT_RELAY
     bool "Relay psp-joystick state to split peripherals"
-    depends on ZMK_SPLIT && ZMK_SPLIT_RELAY_EVENT
+    depends on ZMK_SPLIT && ZMK_SPLIT_RELAY_EVENT && ZMK_SPLIT_BLE
+    help
+      Requires the BLE split transport. At the pinned ZMK revision,
+      relay events are not implemented for the wired split transport,
+      so a wired-only central will fail to link.
 
 module = ZMK_PSP_JOYSTICK
 module-str = ZMK_PSP_JOYSTICK

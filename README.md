@@ -178,7 +178,9 @@ Central overlay:
 
 The `psp_joystick` node itself (ADC channels plus the `tokyo2006,psp-joystick`
 node) goes in the peripheral overlay. The central only needs the listener and
-the split proxy node.
+the split proxy node. The relay requires the BLE split transport
+(`CONFIG_ZMK_BLE=y`, `CONFIG_ZMK_SPLIT_BLE=y`); a wired-only split central will
+not link the relay at the pinned ZMK revision.
 
 ## Scroll Layer
 
