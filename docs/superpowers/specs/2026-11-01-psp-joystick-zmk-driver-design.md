@@ -189,7 +189,8 @@ On the first boot without a persisted center:
 4. Store the center in runtime state. Do not persist automatically; only the
    Studio `Calibrate` request persists.
 
-If persisted settings provide a center, auto-center is skipped.
+If persisted settings provide a center and its `center_valid` flag is true,
+auto-center is skipped.
 
 Ordering: the driver does not start the calibration phase until either
 `psp_joystick_settings_load_cb()` has run (it sets `settings_loaded`) or a 1 s
@@ -386,11 +387,14 @@ otherwise proto3 presence omits them. `psp_joystick.options` sets
 `SetState` applies every present field, does not abort on the first validation
 error, reports the first failure in `ErrorResponse`, and on success calls
 `psp_joystick_state_apply_all()` so the driver picks up the new values on the
-next sample tick. `Calibrate` reads the current median from the driver's raw
+next sample tick. When `persist` is true it persists the tunables; it persists
+calibration fields only when the request explicitly includes a calibration
+field, so changing a tunable does not freeze an uncalibrated center. `Calibrate` reads the current median from the driver's raw
 ring buffer (no blocking), requires the stick to be near-still, updates
 `center_x`/`center_y`, and persists when requested. If no local device exists it
-returns the split-calibration error described in §13. `Reset` restores defaults
-and persists their removal when `factory_defaults` is true. `SetState` and
+returns the split-calibration error described in §13. `Calibrate(persist=true)` also sets the persisted
+`center_valid` flag. `Reset` restores defaults and persists their removal when
+`factory_defaults` is true, which clears `center_valid`. `SetState` and
 `Reset` relay the resulting state to peripheral halves. `Calibrate` does not
 relay; it operates only on a local device.
 
@@ -450,6 +454,20 @@ custom processor that reads runtime state.
 `INT32` storage is used for all numbers and re-cast on read/write, matching the
 cirque implementation.
 
+The getter returns the *effective* value (persisted or default), so persistence
+cannot be inferred from its return code. Two mechanisms keep defaults and
+persistence honest:
+
+- At driver init (before `settings_load()`), the driver calls a weak
+  `psp_joystick_settings_install_dt_defaults(dev)` hook. The settings module
+  installs the DT-derived values with `zmk_custom_setting_set_default()`, so a
+  fresh boot uses DT tuning rather than the compile-time defaults.
+- A persisted boolean `center_valid` (not part of the RPC state) records whether
+  the center was deliberately calibrated. `Calibrate(persist=true)` sets it;
+  `Reset(factory_defaults=true)` clears it. Boot auto-centering runs only when it
+  is false.
+
+
 - `psp_joystick_settings_save_all(dev)` called on `SetState`/`Calibrate` with
   `persist = true`.
 - `psp_joystick_settings_reset_all(dev)` called on `Reset` with
@@ -498,7 +516,9 @@ Configuration state: `src/split/psp_joystick_relay.c` carries a packed struct
 of the runtime state via `ZMK_RELAY_EVENT_CENTRAL_TO_PERIPHERAL` /
 `ZMK_RELAY_EVENT_HANDLE`, gated by `CONFIG_ZMK_PSP_JOYSTICK_SPLIT_RELAY` and
 `CONFIG_ZMK_SPLIT`. The central sends after `SetState`/`Reset`; the peripheral
-applies without persisting.
+applies without persisting. The central does not automatically re-broadcast
+persisted tunables when a peripheral reconnects; the README documents this
+limitation.
 
 The state layer's fallback state keeps the RPC functional on a half without a
 local device (e.g., Studio over USB on the central while the stick is on the
