@@ -85,7 +85,6 @@ stick from a different rail than the one the ADC range assumes.
 ```dts
 #include <zephyr/dt-bindings/adc/adc.h>
 #include <zephyr/dt-bindings/adc/nrf-adc.h>
-#include <tokyo2006/psp_joystick.dtsi>
 
 &adc {
     status = "okay";
@@ -198,8 +197,9 @@ turns X/Y into horizontal/vertical wheel and the scaler sets the step size:
 ```
 
 Because the override does not set `process-next`, it replaces the base
-processors, so the pointer does not move while scrolling. Increase the second
-scaler cell (`24`) to scroll faster; decrease it to scroll slower.
+processors, so the pointer does not move while scrolling. Lower the second
+scaler cell (divisor `24`) to scroll faster; raise it to scroll slower. (The
+first cell is the multiplier.)
 
 ## Studio RPC
 
@@ -220,18 +220,23 @@ Requests: `GetState`, `SetState` (with `persist`), `Calibrate` (with `persist`),
 and `Reset` (with `factory_defaults`).
 
 `Calibrate` reads the last 16 samples without blocking. Release the stick
-before calibrating; if it is moving, the request fails with
-`"joystick is moving; release it and retry"`.
+before calibrating. The request fails with
+`"joystick is moving; release it and retry"` if the stick is moving, and with
+`"not enough samples yet; try again"` when fewer than 16 samples have been
+collected.
 
 ## Calibration and Persistence
 
-- On first boot without a persisted center, the driver collects a 500 ms
-  window, rejects the measurement if the stick is moving or far from the DT
-  expected center, and otherwise uses the median as the center.
+- Without a persisted center, the driver auto-centers on boot by collecting a
+  500 ms window; without custom settings, this happens on every boot. The
+  measurement is rejected if the stick is moving or, when `center-x`/`center-y`
+  are set, far from that DT expected center; otherwise the median becomes the
+  center.
 - When custom settings are enabled and a center was persisted, boot-time
   auto-centering is skipped.
 - `SetState(persist=true)` and `Calibrate(persist=true)` write every field.
-- `Reset(factory_defaults=true)` erases the persisted records.
+- `Reset` always restores the in-memory defaults; `Reset(factory_defaults=true)`
+  additionally erases the persisted records.
 
 ## Split Limitation
 
