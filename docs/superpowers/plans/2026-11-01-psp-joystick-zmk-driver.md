@@ -1883,6 +1883,13 @@ git commit -m "feat: add psp joystick Studio RPC protocol and handler"
 
 ## Task 6: Add settings persistence and the split relay
 
+> **Post-review amendment:** the final review found that the settings getter
+> returns the *effective* value (persisted or default), so persistence cannot be
+> inferred from its return code. The implementation now installs DT-derived
+> defaults with `zmk_custom_setting_set_default()` before `settings_load()` and
+> gates auto-centering on a persisted `center_valid` boolean. See spec §12.
+> Follow the fix dispatch, not the original snippet below, for those two points.
+
 **Files:**
 - Create: `include/tokyo2006/psp-joystick/psp_joystick_settings.h`
 - Create: `src/studio/psp_joystick_settings.c`
