@@ -1885,7 +1885,7 @@ git commit -m "feat: add psp joystick Studio RPC protocol and handler"
 - Create: `src/studio/psp_joystick_settings.c`
 - Create: `include/tokyo2006/psp-joystick/psp_joystick_relay.h`
 - Rename + replace: `src/split/template_relay.c` → `src/split/psp_joystick_relay.c`
-- Delete: `include/your-name/template/template_relay.h` and its directory
+- Rename + replace: `include/tokyo2006/psp-joystick/template_relay.h` → `include/tokyo2006/psp-joystick/psp_joystick_relay.h`
 
 **Interfaces:**
 - Consumes: state getters/setters, `zmk_custom_setting_*` API.
@@ -2188,10 +2188,8 @@ void psp_joystick_relay_send_state(const struct device *dev);
 - [ ] **Step 4: Rename and replace the split relay**
 
 ```bash
-mkdir -p include/tokyo2006/psp-joystick
-git rm include/your-name/template/template_relay.h
 git mv src/split/template_relay.c src/split/psp_joystick_relay.c
-rmdir include/your-name/template include/your-name 2>/dev/null || true
+git mv include/tokyo2006/psp-joystick/template_relay.h include/tokyo2006/psp-joystick/psp_joystick_relay.h
 ```
 
 Replace `src/split/psp_joystick_relay.c`:
