@@ -568,7 +568,7 @@ config ZMK_PSP_JOYSTICK_STUDIO_RPC
 
 config ZMK_PSP_JOYSTICK_SPLIT_RELAY
     bool "Relay PSP joystick configuration to split peripherals"
-    depends on ZMK_SPLIT && ZMK_SPLIT_RELAY_EVENT
+    depends on ZMK_SPLIT && ZMK_SPLIT_RELAY_EVENT && ZMK_SPLIT_BLE
 
 module = ZMK_PSP_JOYSTICK
 module-str = ZMK_PSP_JOYSTICK
