@@ -128,8 +128,13 @@ static int handle_set_state(const tokyo2006_psp_joystick_SetStateRequest *req,
 
     (void)psp_joystick_state_apply_all(dev);
 
+    bool include_calibration = req->state.has_center_x || req->state.has_center_y ||
+                               req->state.has_min_x || req->state.has_max_x ||
+                               req->state.has_min_y || req->state.has_max_y;
+
+    int save_rc = 0;
     if (req->persist) {
-        (void)psp_joystick_settings_save_all(dev);
+        save_rc = psp_joystick_settings_save_all(dev, include_calibration);
     }
 
 #if IS_ENABLED(CONFIG_ZMK_PSP_JOYSTICK_SPLIT_RELAY)
@@ -139,7 +144,7 @@ static int handle_set_state(const tokyo2006_psp_joystick_SetStateRequest *req,
     tokyo2006_psp_joystick_SetStateResponse out = tokyo2006_psp_joystick_SetStateResponse_init_zero;
     fill_state(dev, &out.state);
     out.has_state = true;
-    out.persisted = req->persist;
+    out.persisted = req->persist && save_rc == 0;
     resp->which_response_type = tokyo2006_psp_joystick_Response_set_state_tag;
     resp->response_type.set_state = out;
     return 0;
@@ -173,7 +178,7 @@ static int handle_calibrate(const tokyo2006_psp_joystick_CalibrateRequest *req,
 
     (void)psp_joystick_state_apply_all(dev);
     if (req->persist) {
-        (void)psp_joystick_settings_save_all(dev);
+        (void)psp_joystick_settings_save_all(dev, true);
     }
 
     tokyo2006_psp_joystick_CalibrateResponse out =

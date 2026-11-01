@@ -33,6 +33,19 @@ ARTIFACTS = {
         "CONFIG_ZMK_SPLIT_ROLE_CENTRAL=y",
         "CONFIG_ZMK_SPLIT_RELAY_EVENT=y",
     ],
+    "psp_joystick_split_peripheral": [
+        "CONFIG_ZMK_SPLIT=y",
+        "CONFIG_ZMK_SPLIT_BLE=y",
+        "CONFIG_ZMK_SPLIT_RELAY_EVENT=y",
+        "CONFIG_ZMK_PSP_JOYSTICK_SPLIT_RELAY=y",
+        "# CONFIG_ZMK_SPLIT_ROLE_CENTRAL is not set",
+    ],
+    "psp_joystick_no_device": [
+        "CONFIG_ZMK_PSP_JOYSTICK=y",
+        "CONFIG_ZMK_PSP_JOYSTICK_STUDIO_RPC=y",
+        "# CONFIG_ZMK_PSP_JOYSTICK_DRIVER is not set",
+        "CONFIG_ZMK_CUSTOM_SETTINGS=y",
+    ],
 }
 
 

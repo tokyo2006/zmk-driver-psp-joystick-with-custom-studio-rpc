@@ -1,3 +1,4 @@
+#include <tokyo2006/psp_joystick.dtsi>
 #include <zephyr/dt-bindings/adc/adc.h>
 #include <zephyr/dt-bindings/adc/nrf-adc.h>
 

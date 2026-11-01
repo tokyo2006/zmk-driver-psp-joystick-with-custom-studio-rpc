@@ -23,3 +23,19 @@ include:
     shield: tester_xiao
     cmake-args: -DCONFIG_ZMK_BLE=y -DCONFIG_INPUT=y -DCONFIG_ADC=y -DCONFIG_ADC_NRFX_SAADC=y -DCONFIG_ZMK_POINTING=y -DCONFIG_ZMK_PSP_JOYSTICK=y -DCONFIG_ZMK_SPLIT=y -DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=y -DCONFIG_ZMK_PSP_JOYSTICK_SPLIT_RELAY=y -DCONFIG_ZMK_SPLIT_RELAY_EVENT=y -DCONFIG_ZMK_STUDIO=y -DCONFIG_ZMK_PSP_JOYSTICK_STUDIO_RPC=y
     snippet: studio-rpc-usb-uart
+
+  # Peripheral half: no ZMK_SPLIT_ROLE_CENTRAL and no CONFIG_ZMK_POINTING, so
+  # the relay receiver (psp_joystick_relay_on_state) compiles and the listener
+  # stays inert.
+  - artifact: psp_joystick_split_peripheral
+    board: xiao_ble//zmk
+    shield: tester_xiao
+    cmake-args: -DCONFIG_ZMK_BLE=y -DCONFIG_ZMK_SPLIT=y -DCONFIG_ZMK_SPLIT_RELAY_EVENT=y -DCONFIG_ZMK_PSP_JOYSTICK=y -DCONFIG_ZMK_PSP_JOYSTICK_SPLIT_RELAY=y
+
+  # No local joystick node: exercises the weak-hook fallback and the
+  # RPC/settings path without the ADC driver.
+  - artifact: psp_joystick_no_device
+    board: xiao_ble//zmk
+    shield: renode_usb_wired_split
+    cmake-args: -DCONFIG_INPUT=y -DCONFIG_ADC=y -DCONFIG_ADC_NRFX_SAADC=y -DCONFIG_ZMK_STUDIO=y -DCONFIG_ZMK_PSP_JOYSTICK=y -DCONFIG_ZMK_PSP_JOYSTICK_STUDIO_RPC=y -DCONFIG_ZMK_CUSTOM_SETTINGS=y -DCONFIG_ZMK_CUSTOM_SETTINGS_STUDIO_RPC=y
+    snippet: studio-rpc-usb-uart

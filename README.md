@@ -182,6 +182,11 @@ the split proxy node. The relay requires the BLE split transport
 (`CONFIG_ZMK_BLE=y`, `CONFIG_ZMK_SPLIT_BLE=y`); a wired-only split central will
 not link the relay at the pinned ZMK revision.
 
+The central relays state after `SetState`/`Reset`. After a peripheral
+reboot/reconnect it does not automatically re-send persisted tunables, so
+re-apply a setting (or reset/reboot both halves) to resync. This is an accepted
+v1 limitation.
+
 ## Scroll Layer
 
 Add a layer override to the listener. On the scroll layer, the code mapper
@@ -231,9 +236,10 @@ collected.
 
 - Without a persisted center, the driver auto-centers on boot by collecting a
   500 ms window; without custom settings, this happens on every boot. The
-  measurement is rejected if the stick is moving or, when `center-x`/`center-y`
-  are set, far from that DT expected center; otherwise the median becomes the
-  center.
+  window is capped at 64 samples, so a 4 ms sample interval gives an effective
+  window of about 256 ms. The measurement is rejected if the stick is moving
+  or, when `center-x`/`center-y` are set, far from that DT expected center;
+  otherwise the median becomes the center.
 - When custom settings are enabled and a center was persisted, boot-time
   auto-centering is skipped.
 - `SetState(persist=true)` and `Calibrate(persist=true)` write every field.

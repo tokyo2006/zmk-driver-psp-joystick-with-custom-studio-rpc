@@ -7,9 +7,8 @@ if ZMK_PSP_JOYSTICK
 
 config ZMK_PSP_JOYSTICK_DRIVER
     bool "PSP joystick ADC input driver"
-    default y
+    default y if DT_HAS_TOKYO2006_PSP_JOYSTICK_ENABLED
     depends on INPUT && ADC
-    depends on DT_HAS_TOKYO2006_PSP_JOYSTICK_ENABLED
 
 config ZMK_PSP_JOYSTICK_STUDIO_RPC
     bool "Enable psp-joystick custom Studio RPC"
@@ -21,7 +20,7 @@ config ZMK_PSP_JOYSTICK_SPLIT_RELAY
     help
       Requires the BLE split transport. At the pinned ZMK revision,
       relay events are not implemented for the wired split transport,
-      so a wired-only central will fail to link.
+      so this option is unavailable on a wired-only central.
 
 module = ZMK_PSP_JOYSTICK
 module-str = ZMK_PSP_JOYSTICK

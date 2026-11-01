@@ -56,8 +56,49 @@ PSP_INT_SETTING(min_x, "min_x", PSP_JOYSTICK_MIN_DEFAULT);
 PSP_INT_SETTING(max_x, "max_x", PSP_JOYSTICK_MAX_DEFAULT);
 PSP_INT_SETTING(min_y, "min_y", PSP_JOYSTICK_MIN_DEFAULT);
 PSP_INT_SETTING(max_y, "max_y", PSP_JOYSTICK_MAX_DEFAULT);
+PSP_BOOL_SETTING(center_valid, "center_valid", false);
 
-int psp_joystick_settings_save_all(const struct device *dev) {
+int psp_joystick_settings_install_dt_defaults(const struct device *dev) {
+    if (dev == NULL) {
+        return 0;
+    }
+
+#define INSTALL_INT(_name, _getter)                                                                \
+    do {                                                                                           \
+        static struct zmk_custom_setting_value _name##_dt;                                         \
+        _name##_dt =                                                                               \
+            (struct zmk_custom_setting_value)ZMK_CUSTOM_SETTING_VALUE_INT32(_getter(dev));         \
+        (void)zmk_custom_setting_set_default(&psp_setting_##_name, &_name##_dt);                   \
+    } while (0)
+
+#define INSTALL_BOOL(_name, _getter)                                                               \
+    do {                                                                                           \
+        static struct zmk_custom_setting_value _name##_dt;                                         \
+        _name##_dt = (struct zmk_custom_setting_value)ZMK_CUSTOM_SETTING_VALUE_BOOL(_getter(dev)); \
+        (void)zmk_custom_setting_set_default(&psp_setting_##_name, &_name##_dt);                   \
+    } while (0)
+
+    INSTALL_INT(deadzone_percent, psp_joystick_state_get_deadzone_percent);
+    INSTALL_INT(max_speed, psp_joystick_state_get_max_speed);
+    INSTALL_INT(curve_exponent_x100, psp_joystick_state_get_curve_exponent_x100);
+    INSTALL_INT(smoothing_percent, psp_joystick_state_get_smoothing_percent);
+    INSTALL_INT(sample_interval_ms, psp_joystick_state_get_sample_interval_ms);
+    INSTALL_BOOL(invert_x, psp_joystick_state_get_invert_x);
+    INSTALL_BOOL(invert_y, psp_joystick_state_get_invert_y);
+    INSTALL_BOOL(swap_xy, psp_joystick_state_get_swap_xy);
+    INSTALL_INT(center_x, psp_joystick_state_get_center_x);
+    INSTALL_INT(center_y, psp_joystick_state_get_center_y);
+    INSTALL_INT(min_x, psp_joystick_state_get_min_x);
+    INSTALL_INT(max_x, psp_joystick_state_get_max_x);
+    INSTALL_INT(min_y, psp_joystick_state_get_min_y);
+    INSTALL_INT(max_y, psp_joystick_state_get_max_y);
+
+#undef INSTALL_INT
+#undef INSTALL_BOOL
+    return 0;
+}
+
+int psp_joystick_settings_save_all(const struct device *dev, bool include_calibration) {
     int first_rc = 0;
     int rc;
 
@@ -91,13 +132,22 @@ int psp_joystick_settings_save_all(const struct device *dev) {
     SAVE_BOOL(swap_xy, psp_joystick_state_get_swap_xy);
 
     /* Calibration is only meaningful on the half that owns the ADC. */
-    if (dev != NULL) {
+    if (include_calibration && dev != NULL) {
         SAVE_INT(center_x, psp_joystick_state_get_center_x);
         SAVE_INT(center_y, psp_joystick_state_get_center_y);
         SAVE_INT(min_x, psp_joystick_state_get_min_x);
         SAVE_INT(max_x, psp_joystick_state_get_max_x);
         SAVE_INT(min_y, psp_joystick_state_get_min_y);
         SAVE_INT(max_y, psp_joystick_state_get_max_y);
+
+        if (first_rc == 0) {
+            rc = zmk_custom_setting_set_bool(&psp_setting_center_valid, true,
+                                             ZMK_CUSTOM_SETTING_WRITE_MODE_PERSIST);
+            if (rc != 0) {
+                first_rc = rc;
+                LOG_WRN("save center_valid failed: %d", rc);
+            }
+        }
     }
 
 #undef SAVE_INT
@@ -119,8 +169,6 @@ int psp_joystick_settings_reset_all(const struct device *dev) {
 int psp_joystick_settings_load_cb(const struct device *dev) {
     int rc;
     int32_t value;
-    bool center_x_persisted = false;
-    bool center_y_persisted = false;
 
 #define LOAD_INT(name, setter)                                                                     \
     do {                                                                                           \
@@ -151,6 +199,8 @@ int psp_joystick_settings_load_cb(const struct device *dev) {
     LOAD_BOOL(invert_x, psp_joystick_state_set_invert_x);
     LOAD_BOOL(invert_y, psp_joystick_state_set_invert_y);
     LOAD_BOOL(swap_xy, psp_joystick_state_set_swap_xy);
+    LOAD_INT(center_x, psp_joystick_state_set_center_x);
+    LOAD_INT(center_y, psp_joystick_state_set_center_y);
     LOAD_INT(min_x, psp_joystick_state_set_min_x);
     LOAD_INT(max_x, psp_joystick_state_set_max_x);
     LOAD_INT(min_y, psp_joystick_state_set_min_y);
@@ -159,19 +209,13 @@ int psp_joystick_settings_load_cb(const struct device *dev) {
 #undef LOAD_INT
 #undef LOAD_BOOL
 
-    rc = zmk_custom_setting_get_int32(&psp_setting_center_x, &value);
-    if (rc == 0) {
-        (void)psp_joystick_state_set_center_x(dev, value);
-        center_x_persisted = true;
+    bool center_valid = false;
+    rc = zmk_custom_setting_get_bool(&psp_setting_center_valid, &center_valid);
+    if (rc != 0) {
+        center_valid = false;
     }
-    rc = zmk_custom_setting_get_int32(&psp_setting_center_y, &value);
-    if (rc == 0) {
-        (void)psp_joystick_state_set_center_y(dev, value);
-        center_y_persisted = true;
-    }
-
     if (dev != NULL && psp_joystick_driver_on_settings_loaded != NULL) {
-        psp_joystick_driver_on_settings_loaded(dev, center_x_persisted && center_y_persisted);
+        psp_joystick_driver_on_settings_loaded(dev, center_valid);
     }
     return 0;
 }
@@ -189,7 +233,13 @@ ZMK_SUBSCRIPTION(psp_joystick_settings_listener, zmk_custom_settings_initialized
 
 #else /* !CONFIG_ZMK_CUSTOM_SETTINGS */
 
-int psp_joystick_settings_save_all(const struct device *dev) {
+int psp_joystick_settings_save_all(const struct device *dev, bool include_calibration) {
+    ARG_UNUSED(dev);
+    ARG_UNUSED(include_calibration);
+    return 0;
+}
+
+int psp_joystick_settings_install_dt_defaults(const struct device *dev) {
     ARG_UNUSED(dev);
     return 0;
 }

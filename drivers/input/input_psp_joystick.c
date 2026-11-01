@@ -62,6 +62,7 @@ struct psp_joystick_data {
     bool calibration_done;
     bool skip_auto_center;
     bool reported_nonzero;
+    bool adc_error_logged;
     bool ema_valid;
     int16_t ema_x;
     int16_t ema_y;
@@ -265,9 +266,13 @@ static void psp_joystick_work_cb(struct k_work *work) {
         rc = psp_read_channel(&config->adc_y, &raw_y);
     }
     if (rc != 0) {
-        LOG_WRN("ADC read failed: %d", rc);
+        if (!data->adc_error_logged) {
+            LOG_WRN("ADC read failed: %d", rc);
+            data->adc_error_logged = true;
+        }
         goto reschedule;
     }
+    data->adc_error_logged = false;
 
     raw_x = MIN(raw_x, PSP_ADC_MAX);
     raw_y = MIN(raw_y, PSP_ADC_MAX);
@@ -363,6 +368,9 @@ static int psp_joystick_init(const struct device *dev) {
 
     k_work_init_delayable(&data->work, psp_joystick_work_cb);
     (void)psp_joystick_state_load_defaults(dev);
+    if (psp_joystick_settings_install_dt_defaults != NULL) {
+        (void)psp_joystick_settings_install_dt_defaults(dev);
+    }
     k_work_schedule(&data->work, K_MSEC(PSP_FIRST_TICK_MS));
     return 0;
 }

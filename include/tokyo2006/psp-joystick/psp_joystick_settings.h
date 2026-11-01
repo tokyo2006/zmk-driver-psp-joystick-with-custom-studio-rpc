@@ -5,13 +5,15 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 #include <zephyr/device.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int psp_joystick_settings_save_all(const struct device *dev);
+int psp_joystick_settings_save_all(const struct device *dev, bool include_calibration);
 int psp_joystick_settings_reset_all(const struct device *dev);
 int psp_joystick_settings_load_cb(const struct device *dev);
 

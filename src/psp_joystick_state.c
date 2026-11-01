@@ -66,7 +66,7 @@ static void notify_changed(void) {
     }
 
 #define VALID_U8(v, max) ((uint32_t)(v) <= (uint32_t)(max))
-#define VALID_I16(v) ((int32_t)(v) >= 0 && (int32_t)(v) <= 4095)
+#define VALID_ADC_RAW(v) ((int32_t)(v) >= 0 && (int32_t)(v) <= 4095)
 #define VALID_CURVE(v) ((v) == 100 || (v) == 150 || (v) == 200 || (v) == 250 || (v) == 300)
 
 DEFINE_GETTER(uint8_t, deadzone_percent, deadzone_percent)
@@ -92,12 +92,12 @@ DEFINE_SETTER(int32_t, sample_interval_ms, sample_interval_ms, ((v) >= 4 && (v) 
 DEFINE_SETTER(bool, invert_x, invert_x, true)
 DEFINE_SETTER(bool, invert_y, invert_y, true)
 DEFINE_SETTER(bool, swap_xy, swap_xy, true)
-DEFINE_SETTER(int32_t, center_x, center_x, VALID_I16(v))
-DEFINE_SETTER(int32_t, center_y, center_y, VALID_I16(v))
-DEFINE_SETTER(int32_t, min_x, min_x, VALID_I16(v))
-DEFINE_SETTER(int32_t, max_x, max_x, VALID_I16(v))
-DEFINE_SETTER(int32_t, min_y, min_y, VALID_I16(v))
-DEFINE_SETTER(int32_t, max_y, max_y, VALID_I16(v))
+DEFINE_SETTER(int32_t, center_x, center_x, VALID_ADC_RAW(v))
+DEFINE_SETTER(int32_t, center_y, center_y, VALID_ADC_RAW(v))
+DEFINE_SETTER(int32_t, min_x, min_x, VALID_ADC_RAW(v))
+DEFINE_SETTER(int32_t, max_x, max_x, VALID_ADC_RAW(v))
+DEFINE_SETTER(int32_t, min_y, min_y, VALID_ADC_RAW(v))
+DEFINE_SETTER(int32_t, max_y, max_y, VALID_ADC_RAW(v))
 
 int psp_joystick_state_load_defaults(const struct device *dev) {
     if (dev != NULL && psp_joystick_driver_load_defaults != NULL) {

@@ -28,6 +28,12 @@ static int psp_joystick_relay_on_state(const zmk_event_t *eh) {
         return ZMK_EV_EVENT_BUBBLE;
     }
 
+    if (ev->version != PSP_JOYSTICK_RELAY_STATE_VERSION) {
+        LOG_WRN("Ignoring relayed state v%u (expected v%u)", ev->version,
+                PSP_JOYSTICK_RELAY_STATE_VERSION);
+        return ZMK_EV_EVENT_HANDLED;
+    }
+
     const struct device *dev = DEVICE_DT_GET_ANY(tokyo2006_psp_joystick);
     if (dev == NULL) {
         LOG_WRN("No psp-joystick device on peripheral; ignoring relayed state");

@@ -93,6 +93,7 @@ int psp_joystick_driver_calibrate(const struct device *dev, int32_t *center_x, i
     __attribute__((weak));
 void psp_joystick_driver_on_settings_loaded(const struct device *dev, bool center_persisted)
     __attribute__((weak));
+int psp_joystick_settings_install_dt_defaults(const struct device *dev) __attribute__((weak));
 
 #ifdef __cplusplus
 }
