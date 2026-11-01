@@ -1,0 +1,33 @@
+/*
+ * Copyright (c) 2026 The ZMK Contributors
+ * SPDX-License-Identifier: MIT
+ *
+ * Scroll helpers for the PSP joystick listener. Include this file, then add
+ * a layer override to your listener:
+ *
+ *   &psp_joystick_listener {
+ *       scroll {
+ *           layers = <SCROLL>;
+ *           input-processors = <&psp_scroll_map>, <&psp_scroll_scale 1 24>;
+ *       };
+ *   };
+ */
+
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+/ {
+    psp_scroll_map: psp_scroll_map {
+        compatible = "zmk,input-processor-code-mapper";
+        #input-processor-cells = <0>;
+        type = <INPUT_EV_REL>;
+        map = <INPUT_REL_X INPUT_REL_HWHEEL INPUT_REL_Y INPUT_REL_WHEEL>;
+    };
+
+    psp_scroll_scale: psp_scroll_scale {
+        compatible = "zmk,input-processor-scaler";
+        #input-processor-cells = <2>;
+        type = <INPUT_EV_REL>;
+        codes = <INPUT_REL_WHEEL INPUT_REL_HWHEEL>;
+        track-remainders;
+    };
+};
