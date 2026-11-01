@@ -557,8 +557,10 @@ split peripheral auto-centers at boot"` in that case.
   `xiao_ble//zmk` (nRF52840) with `CONFIG_ZMK_POINTING`, `CONFIG_ADC`,
   `CONFIG_ADC_NRFX_SAADC`, `CONFIG_INPUT`, Studio RPC enabled, and custom
   settings enabled. The `tester_xiao.overlay` instantiates the driver on two
-  ADC channels and an input listener. A fourth artifact uses the wired-split
-  shield to compile the split-relay path.
+  ADC channels and an input listener. Six artifacts cover: the basic driver,
+  Studio RPC, custom settings, a BLE split central with a local stick, a BLE
+  split peripheral (compiles the relay receiver), and a central without a
+  local stick (compiles the weak-hook fallback).
 - **Manual smoke test**: README provides a minimal keymap, a scroll layer, and
   example Studio RPC calls. Acceptance: pointer moves in all directions,
   returns to rest with no drift, scroll layer converts motion to wheel, reboot
@@ -576,9 +578,8 @@ if ZMK_PSP_JOYSTICK
 
 config ZMK_PSP_JOYSTICK_DRIVER
     bool "PSP joystick ADC input driver"
-    default y
+    default y if DT_HAS_TOKYO2006_PSP_JOYSTICK_ENABLED
     depends on INPUT && ADC
-    depends on DT_HAS_TOKYO2006_PSP_JOYSTICK_ENABLED
 
 config ZMK_PSP_JOYSTICK_STUDIO_RPC
     bool "Enable PSP joystick Studio RPC subsystem"
@@ -589,6 +590,9 @@ config ZMK_PSP_JOYSTICK_STUDIO_RPC
 config ZMK_PSP_JOYSTICK_SPLIT_RELAY
     bool "Relay PSP joystick configuration to split peripherals"
     depends on ZMK_SPLIT && ZMK_SPLIT_RELAY_EVENT && ZMK_SPLIT_BLE
+    help
+      Requires the BLE split transport; the option is unavailable on a
+      wired-only central.
 
 module = ZMK_PSP_JOYSTICK
 module-str = ZMK_PSP_JOYSTICK
