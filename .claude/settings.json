@@ -1,0 +1,33 @@
+{
+  "worktree": {
+    "symlinkDirectories": ["dependencies", ".west"]
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "deny": ["Bash(*git push*main*)", "Bash(*git remote*)"]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "filesystem": {
+      "allowWrite": ["~/.cmake/", "/workspaces/", "."],
+      "allowRead": ["/workspaces/"]
+    },
+    "network": {
+      "allowedDomains": ["github.com"]
+    }
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && pre-commit run -a",
+            "timeout": 240
+          }
+        ]
+      }
+    ]
+  }
+}
