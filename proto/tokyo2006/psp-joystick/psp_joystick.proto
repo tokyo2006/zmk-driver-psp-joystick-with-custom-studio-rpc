@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package your_name.template;
+package tokyo2006.psp_joystick;
 
 message SampleRequest { int32 value = 1; }
 

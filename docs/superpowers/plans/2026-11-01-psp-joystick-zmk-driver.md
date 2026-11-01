@@ -26,7 +26,7 @@
 
 ## File Structure
 
-Bootstrap files from `cormoran/zmk-module-template-with-custom-studio-rpc` (kept): `CMakeLists.txt`, `Kconfig`, `zephyr/module.yml`, `.github/workflows/zmk-module.yml`, `scripts/`, `west/`, `tests/zmk-config/`, `tests/studio/`, `tests/test.dtsi`.
+Bootstrap files from `cormoran/zmk-driver-psp-joystick-with-custom-studio-rpc` (kept): `CMakeLists.txt`, `Kconfig`, `zephyr/module.yml`, `.github/workflows/zmk-module.yml`, `scripts/`, `west/`, `tests/zmk-config/`, `tests/studio/`, `tests/test.dtsi`.
 
 Feature files created or replaced:
 
@@ -74,7 +74,7 @@ Run from the repository root:
 
 ```bash
 TEMPLATE_DIR="$(mktemp -d)"
-git clone --depth 1 https://github.com/cormoran/zmk-module-template-with-custom-studio-rpc.git "$TEMPLATE_DIR"
+git clone --depth 1 https://github.com/cormoran/zmk-driver-psp-joystick-with-custom-studio-rpc.git "$TEMPLATE_DIR"
 rsync -a --exclude .git "$TEMPLATE_DIR"/ .
 rm -rf "$TEMPLATE_DIR"
 git add -A
@@ -1885,7 +1885,7 @@ git commit -m "feat: add psp joystick Studio RPC protocol and handler"
 - Create: `src/studio/psp_joystick_settings.c`
 - Create: `include/tokyo2006/psp-joystick/psp_joystick_relay.h`
 - Rename + replace: `src/split/template_relay.c` → `src/split/psp_joystick_relay.c`
-- Delete: `include/your-name/template/template_relay.h` and its directory
+- Delete: `include/tokyo2006/psp-joystick/template_relay.h` and its directory
 
 **Interfaces:**
 - Consumes: state getters/setters, `zmk_custom_setting_*` API.
@@ -2189,9 +2189,9 @@ void psp_joystick_relay_send_state(const struct device *dev);
 
 ```bash
 mkdir -p include/tokyo2006/psp-joystick
-git rm include/your-name/template/template_relay.h
+git rm include/tokyo2006/psp-joystick/template_relay.h
 git mv src/split/template_relay.c src/split/psp_joystick_relay.c
-rmdir include/your-name/template include/your-name 2>/dev/null || true
+rmdir include/tokyo2006/psp-joystick 2>/dev/null || true
 ```
 
 Replace `src/split/psp_joystick_relay.c`:
