@@ -1,13 +1,52 @@
 syntax = "proto3";
-
 package tokyo2006.psp_joystick;
 
-message SampleRequest { int32 value = 1; }
+message PspJoystickState {
+    optional uint32 deadzone_percent = 1;
+    optional uint32 max_speed = 2;
+    optional uint32 curve_exponent_x100 = 3;
+    optional uint32 smoothing_percent = 4;
+    optional uint32 sample_interval_ms = 5;
+    optional bool invert_x = 6;
+    optional bool invert_y = 7;
+    optional bool swap_xy = 8;
+    optional int32 center_x = 9;
+    optional int32 center_y = 10;
+    optional int32 min_x = 11;
+    optional int32 max_x = 12;
+    optional int32 min_y = 13;
+    optional int32 max_y = 14;
+}
 
-message SampleResponse { string value = 1; }
+message GetStateRequest {}
+message GetStateResponse { PspJoystickState state = 1; }
+
+message SetStateRequest {
+    PspJoystickState state = 1;
+    bool persist = 2;
+}
+message SetStateResponse {
+    PspJoystickState state = 1;
+    bool persisted = 2;
+}
+
+message CalibrateRequest { bool persist = 1; }
+message CalibrateResponse {
+    PspJoystickState state = 1;
+    int32 measured_center_x = 2;
+    int32 measured_center_y = 3;
+}
+
+message ResetRequest { bool factory_defaults = 1; }
+message ResetResponse { PspJoystickState state = 1; }
 
 message Request {
-    oneof request_type { SampleRequest sample = 1; }
+    oneof request_type {
+        GetStateRequest get_state = 1;
+        SetStateRequest set_state = 2;
+        CalibrateRequest calibrate = 3;
+        ResetRequest reset = 4;
+    }
 }
 
 message ErrorResponse { string message = 1; }
@@ -15,6 +54,9 @@ message ErrorResponse { string message = 1; }
 message Response {
     oneof response_type {
         ErrorResponse error = 1;
-        SampleResponse sample = 2;
+        GetStateResponse get_state = 2;
+        SetStateResponse set_state = 3;
+        CalibrateResponse calibrate = 4;
+        ResetResponse reset = 5;
     }
 }
