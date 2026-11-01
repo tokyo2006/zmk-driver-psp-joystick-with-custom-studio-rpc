@@ -47,9 +47,12 @@ properties:
     type: boolean
     description: Swap the X and Y axes.
   auto-center:
-    type: boolean
-    default: true
-    description: Auto-calibrate the center at boot unless persisted.
+    type: int
+    default: 1
+    enum: [0, 1]
+    description: |
+      1 enables boot-time auto-centering unless a persisted center exists;
+      0 disables it and uses center-x/center-y (or the default center).
   auto-center-ms:
     type: int
     default: 500
