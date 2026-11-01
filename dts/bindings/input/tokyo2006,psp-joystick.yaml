@@ -1,0 +1,78 @@
+description: |
+  PSP analog thumbstick built from two ratiometric potentiometers. The
+  driver samples X and Y ADC channels, calibrates the center, and emits
+  relative pointer events.
+
+compatible: "tokyo2006,psp-joystick"
+
+include: [base.yaml]
+
+properties:
+  io-channels:
+    type: phandle-array
+    required: true
+    description: X and Y ADC channels, in that order.
+  io-channel-names:
+    type: string-array
+    required: true
+    description: Must be "x" and "y".
+  sample-interval-ms:
+    type: int
+    default: 8
+    description: Sampling period in milliseconds (4-50).
+  deadzone-percent:
+    type: int
+    default: 8
+    description: Deadzone as a percentage of full deflection (0-50).
+  max-speed:
+    type: int
+    default: 8
+    description: REL units per sample at full deflection (1-64).
+  curve-exponent-x100:
+    type: int
+    default: 100
+    enum: [100, 150, 200, 250, 300]
+    description: Response-curve exponent times 100.
+  smoothing-percent:
+    type: int
+    default: 0
+    description: One-pole EMA weight of the new sample (0-90).
+  invert-x:
+    type: boolean
+    description: Invert the X axis.
+  invert-y:
+    type: boolean
+    description: Invert the Y axis.
+  swap-xy:
+    type: boolean
+    description: Swap the X and Y axes.
+  auto-center:
+    type: boolean
+    default: true
+    description: Auto-calibrate the center at boot unless persisted.
+  auto-center-ms:
+    type: int
+    default: 500
+    description: Calibration window in milliseconds (100-2000).
+  center-x:
+    type: int
+    description: Expected raw X center and fallback when calibration fails.
+  center-y:
+    type: int
+    description: Expected raw Y center and fallback when calibration fails.
+  min-x:
+    type: int
+    default: 0
+    description: Raw X value at full negative deflection.
+  max-x:
+    type: int
+    default: 4095
+    description: Raw X value at full positive deflection.
+  min-y:
+    type: int
+    default: 0
+    description: Raw Y value at full negative deflection.
+  max-y:
+    type: int
+    default: 4095
+    description: Raw Y value at full positive deflection.
