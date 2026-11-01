@@ -1,4 +1,5 @@
 #include <zephyr/dt-bindings/adc/adc.h>
+#include <zephyr/dt-bindings/adc/nrf-adc.h>
 
 &adc {
     status = "okay";
@@ -10,7 +11,7 @@
         zephyr,gain = "ADC_GAIN_1_6";
         zephyr,reference = "ADC_REF_INTERNAL";
         zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-        zephyr,input-positive = <4>;
+        zephyr,input-positive = <NRF_SAADC_AIN4>;
         zephyr,resolution = <12>;
     };
 
@@ -19,7 +20,7 @@
         zephyr,gain = "ADC_GAIN_1_6";
         zephyr,reference = "ADC_REF_INTERNAL";
         zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-        zephyr,input-positive = <5>;
+        zephyr,input-positive = <NRF_SAADC_AIN5>;
         zephyr,resolution = <12>;
     };
 };
