@@ -1,4 +1,4 @@
-This repository contains a ZMK module with Web UI using the **unofficial** custom ZMK Studio RPC protocol.
+This repository contains a ZMK module using the **unofficial** custom ZMK Studio RPC protocol.
 
 ## Dev Rules
 

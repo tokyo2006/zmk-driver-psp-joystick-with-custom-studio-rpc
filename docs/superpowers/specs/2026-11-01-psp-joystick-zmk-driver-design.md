@@ -81,7 +81,7 @@ use ZMK's existing `zmk,input-split` transport and are not re-implemented.
 ## 6. Module Layout
 
 Implementation base: bootstrap from
-`cormoran/zmk-driver-psp-joystick-with-custom-studio-rpc` and run its
+`cormoran/zmk-module-template-with-custom-studio-rpc` and run its
 `scripts/init_module.py --namespace tokyo2006 --module psp-joystick --repo
 zmk-driver-psp-joystick-with-custom-studio-rpc`. That supplies the CMake,
 Kconfig, `zephyr/module.yml`, CI workflows, Studio-RPC scaffolding, and build
