@@ -436,7 +436,8 @@ Because the listener applies a layer override and `process-next` is unset, the
 override **replaces** the base processor list on the scroll layer, so no pointer
 movement is produced while scrolling.
 
-The scroll step is the second scaler cell (`24` above); axis inversion for
+The scroll step is the second scaler cell (`24` above), which is a divisor:
+lower it to scroll faster and raise it to scroll slower. Axis inversion for
 scrolling is done with the scaler's sign convention or a second transform
 processor in DT. Runtime scroll tuning is not part of v1 and would require a
 custom processor that reads runtime state.
