@@ -2359,6 +2359,7 @@ Create `dts/tokyo2006/psp_joystick.dtsi`:
 
 ```dts
 #include <zephyr/dt-bindings/adc/adc.h>
+#include <zephyr/dt-bindings/adc/nrf-adc.h>
 
 &board_cdc_acm_uart {
     status = "disabled";
@@ -2374,7 +2375,7 @@ Create `dts/tokyo2006/psp_joystick.dtsi`:
         zephyr,gain = "ADC_GAIN_1_6";
         zephyr,reference = "ADC_REF_INTERNAL";
         zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-        zephyr,input-positive = <4>;
+        zephyr,input-positive = <NRF_SAADC_AIN4>;
         zephyr,resolution = <12>;
     };
 
@@ -2383,7 +2384,7 @@ Create `dts/tokyo2006/psp_joystick.dtsi`:
         zephyr,gain = "ADC_GAIN_1_6";
         zephyr,reference = "ADC_REF_INTERNAL";
         zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-        zephyr,input-positive = <5>;
+        zephyr,input-positive = <NRF_SAADC_AIN5>;
         zephyr,resolution = <12>;
     };
 };
@@ -2418,6 +2419,7 @@ Create `tests/zmk-config/config/renode_usb_wired_split.overlay`:
 
 ```dts
 #include <zephyr/dt-bindings/adc/adc.h>
+#include <zephyr/dt-bindings/adc/nrf-adc.h>
 
 &adc {
     status = "okay";
@@ -2429,7 +2431,7 @@ Create `tests/zmk-config/config/renode_usb_wired_split.overlay`:
         zephyr,gain = "ADC_GAIN_1_6";
         zephyr,reference = "ADC_REF_INTERNAL";
         zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-        zephyr,input-positive = <4>;
+        zephyr,input-positive = <NRF_SAADC_AIN4>;
         zephyr,resolution = <12>;
     };
 
@@ -2438,7 +2440,7 @@ Create `tests/zmk-config/config/renode_usb_wired_split.overlay`:
         zephyr,gain = "ADC_GAIN_1_6";
         zephyr,reference = "ADC_REF_INTERNAL";
         zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-        zephyr,input-positive = <5>;
+        zephyr,input-positive = <NRF_SAADC_AIN5>;
         zephyr,resolution = <12>;
     };
 };
@@ -2578,6 +2580,7 @@ stick from a different rail than the one the ADC range assumes.
 
 ```dts
 #include <zephyr/dt-bindings/adc/adc.h>
+#include <zephyr/dt-bindings/adc/nrf-adc.h>
 #include <tokyo2006/psp_joystick.dtsi>
 
 &adc {
@@ -2590,7 +2593,7 @@ stick from a different rail than the one the ADC range assumes.
         zephyr,gain = "ADC_GAIN_1_6";
         zephyr,reference = "ADC_REF_INTERNAL";
         zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-        zephyr,input-positive = <0>; /* AIN0 */
+        zephyr,input-positive = <NRF_SAADC_AIN0>;
         zephyr,resolution = <12>;
     };
 
@@ -2599,7 +2602,7 @@ stick from a different rail than the one the ADC range assumes.
         zephyr,gain = "ADC_GAIN_1_6";
         zephyr,reference = "ADC_REF_INTERNAL";
         zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-        zephyr,input-positive = <1>; /* AIN1 */
+        zephyr,input-positive = <NRF_SAADC_AIN1>;
         zephyr,resolution = <12>;
     };
 };
