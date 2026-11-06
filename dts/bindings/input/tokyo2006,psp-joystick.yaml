@@ -57,6 +57,17 @@ properties:
     type: int
     default: 500
     description: Calibration window in milliseconds (100-2000).
+  auto-recenter:
+    type: int
+    default: 1
+    enum: [0, 1]
+    description: |
+      1 updates the center while the stick stays still near the current
+      center, tracking rest drift / mechanical hysteresis. Not persisted.
+  auto-recenter-ms:
+    type: int
+    default: 1000
+    description: How long the stick must stay still before the center updates.
   center-x:
     type: int
     description: Expected raw X center and fallback when calibration fails.

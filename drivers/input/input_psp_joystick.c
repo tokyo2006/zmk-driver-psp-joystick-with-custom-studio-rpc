@@ -26,6 +26,7 @@ LOG_MODULE_REGISTER(psp_joystick, CONFIG_ZMK_PSP_JOYSTICK_LOG_LEVEL);
 #define PSP_CAL_SPREAD_LIMIT (PSP_ADC_MAX / 5)
 #define PSP_CAL_CENTER_LIMIT (PSP_ADC_MAX / 4)
 #define PSP_MANUAL_SPREAD_LIMIT (PSP_ADC_MAX / 10)
+#define PSP_RECENTER_WINDOW (PSP_ADC_MAX / 16)
 
 struct psp_joystick_config {
     struct adc_dt_spec adc_x;
@@ -33,6 +34,8 @@ struct psp_joystick_config {
     uint16_t sample_interval_ms;
     uint16_t auto_center_ms;
     bool auto_center;
+    bool auto_recenter;
+    uint16_t auto_recenter_ms;
     bool invert_x;
     bool invert_y;
     bool swap_xy;
@@ -61,6 +64,7 @@ struct psp_joystick_data {
     bool calibrating;
     bool calibration_done;
     bool skip_auto_center;
+    uint16_t recenter_count;
     bool reported_nonzero;
     bool adc_error_logged;
     bool ema_valid;
@@ -311,6 +315,35 @@ static void psp_joystick_work_cb(struct k_work *work) {
     }
 
     struct psp_joystick_runtime_state *state = &data->state;
+
+    /*
+     * Track slow rest drift / mechanical hysteresis: after the stick has
+     * stayed still near the current center for auto-recenter-ms, move the
+     * center to the median of the recent samples. This keeps the pointer
+     * from drifting left after a left push (or right after a right push)
+     * without needing a large deadzone.
+     */
+    if (data->calibration_done && config->auto_recenter && data->ring_count >= PSP_CAL_WINDOW) {
+        int32_t dx = abs((int32_t)raw_x - state->center_x);
+        int32_t dy = abs((int32_t)raw_y - state->center_y);
+        uint16_t target = (uint16_t)CLAMP(
+            config->auto_recenter_ms / MAX(state->sample_interval_ms, 1), 4, 1000);
+
+        if (dx <= PSP_RECENTER_WINDOW && dy <= PSP_RECENTER_WINDOW) {
+            if (++data->recenter_count >= target) {
+                uint16_t cx, cy, sx, sy;
+                measurement_from_ring(data, PSP_CAL_WINDOW, &cx, &cy, &sx, &sy);
+                if (sx < PSP_MANUAL_SPREAD_LIMIT && sy < PSP_MANUAL_SPREAD_LIMIT) {
+                    state->center_x = (int16_t)cx;
+                    state->center_y = (int16_t)cy;
+                }
+                data->recenter_count = 0;
+            }
+        } else {
+            data->recenter_count = 0;
+        }
+    }
+
     int16_t x = psp_joystick_normalize(raw_x, state->center_x, state->min_x, state->max_x);
     int16_t y = psp_joystick_normalize(raw_y, state->center_y, state->min_y, state->max_y);
 
@@ -407,6 +440,8 @@ static int psp_joystick_init(const struct device *dev) {
         .sample_interval_ms = DT_INST_PROP_OR(n, sample_interval_ms, 8),                           \
         .auto_center_ms = DT_INST_PROP_OR(n, auto_center_ms, 500),                                 \
         .auto_center = DT_INST_PROP_OR(n, auto_center, 1),                                         \
+        .auto_recenter = DT_INST_PROP_OR(n, auto_recenter, 1),                                     \
+        .auto_recenter_ms = DT_INST_PROP_OR(n, auto_recenter_ms, 1000),                            \
         .invert_x = DT_INST_PROP_OR(n, invert_x, 0),                                               \
         .invert_y = DT_INST_PROP_OR(n, invert_y, 0),                                               \
         .swap_xy = DT_INST_PROP_OR(n, swap_xy, 0),                                                 \
