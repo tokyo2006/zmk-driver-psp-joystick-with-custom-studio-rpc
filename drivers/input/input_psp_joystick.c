@@ -9,6 +9,7 @@
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/adc.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
 #include <zephyr/input/input.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -22,6 +23,7 @@ LOG_MODULE_REGISTER(psp_joystick, CONFIG_ZMK_PSP_JOYSTICK_LOG_LEVEL);
 #define PSP_RING_SIZE 64
 #define PSP_CAL_WINDOW 16
 #define PSP_ADC_MAX 4095
+#define PSP_HALF_SCALE 32767
 #define PSP_FIRST_TICK_MS 1000
 #define PSP_CAL_SPREAD_LIMIT (PSP_ADC_MAX / 5)
 #define PSP_CAL_CENTER_LIMIT (PSP_ADC_MAX / 4)
@@ -39,6 +41,8 @@ struct psp_joystick_config {
     bool invert_x;
     bool invert_y;
     bool swap_xy;
+    bool arrow_mode;
+    uint8_t arrow_threshold_percent;
     bool has_dt_center;
     int16_t dt_center_x;
     int16_t dt_center_y;
@@ -65,6 +69,7 @@ struct psp_joystick_data {
     bool calibration_done;
     bool skip_auto_center;
     uint16_t recenter_count;
+    uint8_t arrow_dir;
     bool reported_nonzero;
     bool adc_error_logged;
     bool ema_valid;
@@ -252,6 +257,8 @@ int psp_joystick_driver_load_defaults(const struct device *dev) {
     state->invert_x = config->invert_x;
     state->invert_y = config->invert_y;
     state->swap_xy = config->swap_xy;
+    state->arrow_mode = config->arrow_mode;
+    state->arrow_threshold_percent = CLAMP(config->arrow_threshold_percent, 1, 95);
     state->center_x =
         CLAMP(config->has_dt_center ? config->dt_center_x : PSP_JOYSTICK_CENTER_DEFAULT, 0, 4095);
     state->center_y =
@@ -269,6 +276,48 @@ int psp_joystick_driver_apply_state(const struct device *dev) {
     data->state.sample_interval_ms = CLAMP(data->state.sample_interval_ms, 4, 50);
     PSP_WORKQ_RESCHEDULE(&data->work, K_MSEC(data->state.sample_interval_ms));
     return 0;
+}
+
+enum psp_arrow_dir {
+    PSP_ARROW_NONE = 0,
+    PSP_ARROW_UP,
+    PSP_ARROW_DOWN,
+    PSP_ARROW_LEFT,
+    PSP_ARROW_RIGHT,
+};
+
+static uint16_t psp_arrow_code(uint8_t dir) {
+    switch (dir) {
+    case PSP_ARROW_UP:
+        return INPUT_KEY_UP;
+    case PSP_ARROW_DOWN:
+        return INPUT_KEY_DOWN;
+    case PSP_ARROW_LEFT:
+        return INPUT_KEY_LEFT;
+    case PSP_ARROW_RIGHT:
+        return INPUT_KEY_RIGHT;
+    default:
+        return 0;
+    }
+}
+
+static int16_t psp_arrow_magnitude(uint8_t dir, int16_t x, int16_t y) {
+    return (dir == PSP_ARROW_LEFT || dir == PSP_ARROW_RIGHT) ? abs((int32_t)x) : abs((int32_t)y);
+}
+
+static void psp_arrow_set(struct psp_joystick_data *data, uint8_t dir) {
+    if (dir == data->arrow_dir) {
+        return;
+    }
+
+    if (data->arrow_dir != PSP_ARROW_NONE) {
+        input_report_key(data->dev, psp_arrow_code(data->arrow_dir), 0, dir == PSP_ARROW_NONE,
+                         K_NO_WAIT);
+    }
+    if (dir != PSP_ARROW_NONE) {
+        input_report_key(data->dev, psp_arrow_code(dir), 1, true, K_NO_WAIT);
+    }
+    data->arrow_dir = dir;
 }
 
 static void psp_joystick_work_cb(struct k_work *work) {
@@ -367,6 +416,40 @@ static void psp_joystick_work_cb(struct k_work *work) {
 
     psp_joystick_apply_transforms(&x, &y, state->swap_xy, state->invert_x, state->invert_y);
 
+    if (state->arrow_mode) {
+        int32_t threshold = (int32_t)state->arrow_threshold_percent * PSP_HALF_SCALE / 100;
+        int32_t ax = abs((int32_t)x);
+        int32_t ay = abs((int32_t)y);
+        uint8_t candidate = PSP_ARROW_NONE;
+
+        if (ax >= threshold && ax >= ay) {
+            candidate = x > 0 ? PSP_ARROW_RIGHT : PSP_ARROW_LEFT;
+        } else if (ay >= threshold) {
+            candidate = y > 0 ? PSP_ARROW_DOWN : PSP_ARROW_UP;
+        }
+
+        if (data->arrow_dir != PSP_ARROW_NONE) {
+            int32_t magnitude = psp_arrow_magnitude(data->arrow_dir, x, y);
+            int32_t release = threshold * 6 / 10;
+
+            if (magnitude >= release) {
+                if (candidate == PSP_ARROW_NONE) {
+                    candidate = data->arrow_dir;
+                } else if (candidate != data->arrow_dir &&
+                           psp_arrow_magnitude(candidate, x, y) < magnitude * 12 / 10) {
+                    candidate = data->arrow_dir;
+                }
+            }
+        }
+
+        psp_arrow_set(data, candidate);
+        goto reschedule;
+    }
+
+    if (data->arrow_dir != PSP_ARROW_NONE) {
+        psp_arrow_set(data, PSP_ARROW_NONE);
+    }
+
     x = psp_joystick_apply_deadzone(x, state->deadzone_percent);
     y = psp_joystick_apply_deadzone(y, state->deadzone_percent);
     x = psp_joystick_apply_curve(x, state->curve_exponent_x100);
@@ -445,6 +528,8 @@ static int psp_joystick_init(const struct device *dev) {
         .invert_x = DT_INST_PROP_OR(n, invert_x, 0),                                               \
         .invert_y = DT_INST_PROP_OR(n, invert_y, 0),                                               \
         .swap_xy = DT_INST_PROP_OR(n, swap_xy, 0),                                                 \
+        .arrow_mode = DT_INST_PROP_OR(n, arrow_mode, 0),                                           \
+        .arrow_threshold_percent = DT_INST_PROP_OR(n, arrow_threshold_percent, 50),                \
         .has_dt_center = DT_INST_NODE_HAS_PROP(n, center_x) && DT_INST_NODE_HAS_PROP(n, center_y), \
         .dt_center_x = DT_INST_PROP_OR(n, center_x, PSP_JOYSTICK_CENTER_DEFAULT),                  \
         .dt_center_y = DT_INST_PROP_OR(n, center_y, PSP_JOYSTICK_CENTER_DEFAULT),                  \

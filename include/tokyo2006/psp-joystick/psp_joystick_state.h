@@ -22,6 +22,8 @@ extern "C" {
 #define PSP_JOYSTICK_CENTER_DEFAULT 2048
 #define PSP_JOYSTICK_MIN_DEFAULT 0
 #define PSP_JOYSTICK_MAX_DEFAULT 4095
+#define PSP_JOYSTICK_ARROW_MODE_DEFAULT false
+#define PSP_JOYSTICK_ARROW_THRESHOLD_PERCENT_DEFAULT 50
 
 struct psp_joystick_runtime_state {
     uint8_t deadzone_percent;
@@ -38,6 +40,8 @@ struct psp_joystick_runtime_state {
     int16_t max_x;
     int16_t min_y;
     int16_t max_y;
+    bool arrow_mode;
+    uint8_t arrow_threshold_percent;
 };
 
 struct zmk_psp_joystick_status_changed {
@@ -62,6 +66,8 @@ int16_t psp_joystick_state_get_min_x(const struct device *dev);
 int16_t psp_joystick_state_get_max_x(const struct device *dev);
 int16_t psp_joystick_state_get_min_y(const struct device *dev);
 int16_t psp_joystick_state_get_max_y(const struct device *dev);
+bool psp_joystick_state_get_arrow_mode(const struct device *dev);
+uint8_t psp_joystick_state_get_arrow_threshold_percent(const struct device *dev);
 
 int psp_joystick_state_set_deadzone_percent(const struct device *dev, int32_t v);
 int psp_joystick_state_set_max_speed(const struct device *dev, int32_t v);
@@ -77,6 +83,8 @@ int psp_joystick_state_set_min_x(const struct device *dev, int32_t v);
 int psp_joystick_state_set_max_x(const struct device *dev, int32_t v);
 int psp_joystick_state_set_min_y(const struct device *dev, int32_t v);
 int psp_joystick_state_set_max_y(const struct device *dev, int32_t v);
+int psp_joystick_state_set_arrow_mode(const struct device *dev, bool v);
+int psp_joystick_state_set_arrow_threshold_percent(const struct device *dev, int32_t v);
 
 int psp_joystick_state_load_defaults(const struct device *dev);
 int psp_joystick_state_apply_all(const struct device *dev);

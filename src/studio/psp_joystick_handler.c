@@ -66,6 +66,8 @@ static void fill_state(const struct device *dev, tokyo2006_psp_joystick_PspJoyst
     s->max_x = psp_joystick_state_get_max_x(dev);
     s->min_y = psp_joystick_state_get_min_y(dev);
     s->max_y = psp_joystick_state_get_max_y(dev);
+    s->arrow_mode = psp_joystick_state_get_arrow_mode(dev);
+    s->arrow_threshold_percent = psp_joystick_state_get_arrow_threshold_percent(dev);
 
     s->has_deadzone_percent = true;
     s->has_max_speed = true;
@@ -81,6 +83,8 @@ static void fill_state(const struct device *dev, tokyo2006_psp_joystick_PspJoyst
     s->has_max_x = true;
     s->has_min_y = true;
     s->has_max_y = true;
+    s->has_arrow_mode = true;
+    s->has_arrow_threshold_percent = true;
 }
 
 static int handle_get_state(const tokyo2006_psp_joystick_GetStateRequest *req,
@@ -126,6 +130,8 @@ static int handle_set_state(const tokyo2006_psp_joystick_SetStateRequest *req,
     APPLY(max_x, psp_joystick_state_set_max_x);
     APPLY(min_y, psp_joystick_state_set_min_y);
     APPLY(max_y, psp_joystick_state_set_max_y);
+    APPLY(arrow_mode, psp_joystick_state_set_arrow_mode);
+    APPLY(arrow_threshold_percent, psp_joystick_state_set_arrow_threshold_percent);
 
 #undef APPLY
 

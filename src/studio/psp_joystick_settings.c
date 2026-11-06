@@ -56,6 +56,9 @@ PSP_INT_SETTING(min_x, "min_x", PSP_JOYSTICK_MIN_DEFAULT);
 PSP_INT_SETTING(max_x, "max_x", PSP_JOYSTICK_MAX_DEFAULT);
 PSP_INT_SETTING(min_y, "min_y", PSP_JOYSTICK_MIN_DEFAULT);
 PSP_INT_SETTING(max_y, "max_y", PSP_JOYSTICK_MAX_DEFAULT);
+PSP_BOOL_SETTING(arrow_mode, "arrow_mode", PSP_JOYSTICK_ARROW_MODE_DEFAULT);
+PSP_INT_SETTING(arrow_threshold_percent, "arrow_threshold_percent",
+                PSP_JOYSTICK_ARROW_THRESHOLD_PERCENT_DEFAULT);
 PSP_BOOL_SETTING(center_valid, "center_valid", false);
 
 int psp_joystick_settings_install_dt_defaults(const struct device *dev) {
@@ -92,6 +95,8 @@ int psp_joystick_settings_install_dt_defaults(const struct device *dev) {
     INSTALL_INT(max_x, psp_joystick_state_get_max_x);
     INSTALL_INT(min_y, psp_joystick_state_get_min_y);
     INSTALL_INT(max_y, psp_joystick_state_get_max_y);
+    INSTALL_BOOL(arrow_mode, psp_joystick_state_get_arrow_mode);
+    INSTALL_INT(arrow_threshold_percent, psp_joystick_state_get_arrow_threshold_percent);
 
 #undef INSTALL_INT
 #undef INSTALL_BOOL
@@ -130,6 +135,8 @@ int psp_joystick_settings_save_all(const struct device *dev, bool include_calibr
     SAVE_BOOL(invert_x, psp_joystick_state_get_invert_x);
     SAVE_BOOL(invert_y, psp_joystick_state_get_invert_y);
     SAVE_BOOL(swap_xy, psp_joystick_state_get_swap_xy);
+    SAVE_BOOL(arrow_mode, psp_joystick_state_get_arrow_mode);
+    SAVE_INT(arrow_threshold_percent, psp_joystick_state_get_arrow_threshold_percent);
 
     /* Calibration is only meaningful on the half that owns the ADC. */
     if (include_calibration && dev != NULL) {
@@ -205,6 +212,8 @@ int psp_joystick_settings_load_cb(const struct device *dev) {
     LOAD_INT(max_x, psp_joystick_state_set_max_x);
     LOAD_INT(min_y, psp_joystick_state_set_min_y);
     LOAD_INT(max_y, psp_joystick_state_set_max_y);
+    LOAD_BOOL(arrow_mode, psp_joystick_state_set_arrow_mode);
+    LOAD_INT(arrow_threshold_percent, psp_joystick_state_set_arrow_threshold_percent);
 
 #undef LOAD_INT
 #undef LOAD_BOOL

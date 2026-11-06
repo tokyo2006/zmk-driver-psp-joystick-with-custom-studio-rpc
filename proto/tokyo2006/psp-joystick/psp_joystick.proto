@@ -16,6 +16,11 @@ message PspJoystickState {
     optional int32 max_x = 12;
     optional int32 min_y = 13;
     optional int32 max_y = 14;
+    // When true, emit arrow-key input events instead of relative pointer
+    // movement. The input-processor-behaviors node maps them to &kp bindings.
+    optional bool arrow_mode = 15;
+    // Deflection needed to press an arrow key, percent of full scale.
+    optional uint32 arrow_threshold_percent = 16;
 }
 
 message GetStateRequest {}

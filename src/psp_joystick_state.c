@@ -32,6 +32,8 @@ static void set_hard_defaults(struct psp_joystick_runtime_state *s) {
     s->max_x = PSP_JOYSTICK_MAX_DEFAULT;
     s->min_y = PSP_JOYSTICK_MIN_DEFAULT;
     s->max_y = PSP_JOYSTICK_MAX_DEFAULT;
+    s->arrow_mode = PSP_JOYSTICK_ARROW_MODE_DEFAULT;
+    s->arrow_threshold_percent = PSP_JOYSTICK_ARROW_THRESHOLD_PERCENT_DEFAULT;
 }
 
 struct psp_joystick_runtime_state *psp_joystick_state_get_struct(const struct device *dev) {
@@ -83,6 +85,8 @@ DEFINE_GETTER(int16_t, min_x, min_x)
 DEFINE_GETTER(int16_t, max_x, max_x)
 DEFINE_GETTER(int16_t, min_y, min_y)
 DEFINE_GETTER(int16_t, max_y, max_y)
+DEFINE_GETTER(bool, arrow_mode, arrow_mode)
+DEFINE_GETTER(uint8_t, arrow_threshold_percent, arrow_threshold_percent)
 
 DEFINE_SETTER(int32_t, deadzone_percent, deadzone_percent, VALID_U8(v, 50))
 DEFINE_SETTER(int32_t, max_speed, max_speed, ((v) >= 1 && (v) <= 64))
@@ -98,6 +102,8 @@ DEFINE_SETTER(int32_t, min_x, min_x, VALID_ADC_RAW(v))
 DEFINE_SETTER(int32_t, max_x, max_x, VALID_ADC_RAW(v))
 DEFINE_SETTER(int32_t, min_y, min_y, VALID_ADC_RAW(v))
 DEFINE_SETTER(int32_t, max_y, max_y, VALID_ADC_RAW(v))
+DEFINE_SETTER(bool, arrow_mode, arrow_mode, true)
+DEFINE_SETTER(int32_t, arrow_threshold_percent, arrow_threshold_percent, VALID_U8(v, 95))
 
 int psp_joystick_state_load_defaults(const struct device *dev) {
     if (dev != NULL && psp_joystick_driver_load_defaults != NULL) {

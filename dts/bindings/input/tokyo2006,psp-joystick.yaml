@@ -46,6 +46,18 @@ properties:
   swap-xy:
     type: boolean
     description: Swap the X and Y axes.
+  arrow-mode:
+    type: int
+    default: 0
+    enum: [0, 1]
+    description: |
+      When 1, emit INPUT_KEY_UP/DOWN/LEFT/RIGHT input events instead of
+      relative pointer movement. Map them to key bindings with a
+      zmk,input-processor-behaviors node on the input listener.
+  arrow-threshold-percent:
+    type: int
+    default: 50
+    description: Deflection needed to press an arrow key (1-95% of full scale).
   auto-center:
     type: int
     default: 1
