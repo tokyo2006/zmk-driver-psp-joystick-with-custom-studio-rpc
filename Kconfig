@@ -10,6 +10,26 @@ config ZMK_PSP_JOYSTICK_DRIVER
     default y if DT_HAS_TOKYO2006_PSP_JOYSTICK_ENABLED
     depends on INPUT && ADC
 
+config ZMK_PSP_JOYSTICK_DEDICATED_WORKQUEUE
+    bool "Use a dedicated workqueue for joystick sampling"
+    default y
+    depends on ZMK_PSP_JOYSTICK_DRIVER
+    help
+      Run the joystick sampling work on its own workqueue instead of the
+      shared system workqueue. On a keyboard the TPS43 trackpad, RGB and
+      other drivers also use the system workqueue; a slow I2C transfer can
+      delay joystick samples and make the pointer stutter.
+
+config ZMK_PSP_JOYSTICK_WORKQUEUE_STACK_SIZE
+    int "Dedicated workqueue stack size"
+    default 2048
+    depends on ZMK_PSP_JOYSTICK_DEDICATED_WORKQUEUE
+
+config ZMK_PSP_JOYSTICK_WORKQUEUE_PRIORITY
+    int "Dedicated workqueue priority"
+    default 0
+    depends on ZMK_PSP_JOYSTICK_DEDICATED_WORKQUEUE
+
 config ZMK_PSP_JOYSTICK_STUDIO_RPC
     bool "Enable psp-joystick custom Studio RPC"
     depends on ZMK_STUDIO

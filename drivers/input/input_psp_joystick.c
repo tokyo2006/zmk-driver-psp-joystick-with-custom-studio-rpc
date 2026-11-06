@@ -70,6 +70,20 @@ struct psp_joystick_data {
     int32_t remainder_y;
 };
 
+#if IS_ENABLED(CONFIG_ZMK_PSP_JOYSTICK_DEDICATED_WORKQUEUE)
+K_THREAD_STACK_DEFINE(psp_joystick_work_q_stack, CONFIG_ZMK_PSP_JOYSTICK_WORKQUEUE_STACK_SIZE);
+static struct k_work_q psp_joystick_work_q;
+static bool psp_joystick_work_q_started;
+
+#define PSP_WORKQ_SCHEDULE(dwork, delay)                                                           \
+    k_work_schedule_for_queue(&psp_joystick_work_q, dwork, delay)
+#define PSP_WORKQ_RESCHEDULE(dwork, delay)                                                         \
+    k_work_reschedule_for_queue(&psp_joystick_work_q, dwork, delay)
+#else
+#define PSP_WORKQ_SCHEDULE(dwork, delay) k_work_schedule(dwork, delay)
+#define PSP_WORKQ_RESCHEDULE(dwork, delay) k_work_reschedule(dwork, delay)
+#endif
+
 static int psp_read_channel(const struct adc_dt_spec *spec, uint16_t *out) {
     uint16_t buffer = 0;
     struct adc_sequence sequence = {
@@ -249,7 +263,7 @@ int psp_joystick_driver_apply_state(const struct device *dev) {
     struct psp_joystick_data *data = dev->data;
 
     data->state.sample_interval_ms = CLAMP(data->state.sample_interval_ms, 4, 50);
-    k_work_reschedule(&data->work, K_MSEC(data->state.sample_interval_ms));
+    PSP_WORKQ_RESCHEDULE(&data->work, K_MSEC(data->state.sample_interval_ms));
     return 0;
 }
 
@@ -348,7 +362,7 @@ static void psp_joystick_work_cb(struct k_work *work) {
     }
 
 reschedule:
-    k_work_reschedule(&data->work, K_MSEC(CLAMP(data->state.sample_interval_ms, 4, 50)));
+    PSP_WORKQ_RESCHEDULE(&data->work, K_MSEC(CLAMP(data->state.sample_interval_ms, 4, 50)));
 }
 
 static int psp_joystick_init(const struct device *dev) {
@@ -367,11 +381,22 @@ static int psp_joystick_init(const struct device *dev) {
     }
 
     k_work_init_delayable(&data->work, psp_joystick_work_cb);
+
+#if IS_ENABLED(CONFIG_ZMK_PSP_JOYSTICK_DEDICATED_WORKQUEUE)
+    if (!psp_joystick_work_q_started) {
+        k_work_queue_init(&psp_joystick_work_q);
+        k_work_queue_start(&psp_joystick_work_q, psp_joystick_work_q_stack,
+                           K_THREAD_STACK_SIZEOF(psp_joystick_work_q_stack),
+                           CONFIG_ZMK_PSP_JOYSTICK_WORKQUEUE_PRIORITY, NULL);
+        psp_joystick_work_q_started = true;
+    }
+#endif
+
     (void)psp_joystick_state_load_defaults(dev);
     if (psp_joystick_settings_install_dt_defaults != NULL) {
         (void)psp_joystick_settings_install_dt_defaults(dev);
     }
-    k_work_schedule(&data->work, K_MSEC(PSP_FIRST_TICK_MS));
+    PSP_WORKQ_SCHEDULE(&data->work, K_MSEC(PSP_FIRST_TICK_MS));
     return 0;
 }
 
