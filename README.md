@@ -14,7 +14,8 @@ runtime through a custom RPC subsystem.
 - Persistent settings through `cormoran/zmk-feature-custom-settings`.
 - Layer-triggered scrolling using upstream ZMK input processors.
 - Split support: the stick can live on the central or a peripheral half.
-- No web UI dependency; the firmware exposes a custom Studio RPC subsystem.
+- The firmware exposes a custom Studio RPC subsystem; DYA Studio has a
+  dedicated Joystick page and the subsystem also advertises its web UI URL.
 
 ## Required ZMK
 
@@ -225,6 +226,14 @@ Subsystem identifier: `tokyo2006__psp_joystick`.
 
 Requests: `GetState`, `SetState` (with `persist`), `Calibrate` (with `persist`),
 and `Reset` (with `factory_defaults`).
+
+### Web UI
+
+The subsystem advertises `https://studio.dya.cormoran.works/joystick`, the
+Joystick page built into DYA Studio. It exposes the same settings as the RPC:
+deadzone, speed, curve, smoothing, sample interval, axis transforms,
+center/range, Calibrate and Reset, plus a raw range map. Open it from the
+DYA Studio **Subsystems** tab or directly at the URL above.
 
 `Calibrate` reads the last 16 samples without blocking. Release the stick
 before calibrating. The request fails with

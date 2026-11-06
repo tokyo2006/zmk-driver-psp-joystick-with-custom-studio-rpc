@@ -24,9 +24,17 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
+/*
+ * DYA Studio already ships a dedicated Joystick page. Advertise it so other
+ * Studio clients (and the Subsystems tab) can open the same controls.
+ */
+static char *psp_joystick_ui_urls[] = {
+    "https://studio.dya.cormoran.works/joystick",
+};
+
 static struct zmk_rpc_custom_subsystem_meta psp_joystick_subsystem_meta = {
-    .ui_urls = NULL,
-    .ui_urls_count = 0,
+    .ui_urls = psp_joystick_ui_urls,
+    .ui_urls_count = ARRAY_SIZE(psp_joystick_ui_urls),
     .security = ZMK_STUDIO_RPC_HANDLER_UNSECURED,
 };
 
