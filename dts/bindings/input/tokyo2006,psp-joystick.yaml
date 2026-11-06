@@ -58,6 +58,13 @@ properties:
     type: int
     default: 50
     description: Deflection needed to press an arrow key (1-95% of full scale).
+  arrow-layer:
+    type: int
+    default: -1
+    description: |
+      Layer index that temporarily enables arrow mode while the layer is
+      active. -1 disables layer switching. Use the keymap layer constants,
+      e.g. 1 for LOWER.
   auto-center:
     type: int
     default: 1

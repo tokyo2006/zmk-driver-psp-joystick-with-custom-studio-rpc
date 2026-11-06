@@ -15,6 +15,9 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
 
+#include <zmk/event_manager.h>
+#include <zmk/events/layer_state_changed.h>
+
 #include <tokyo2006/psp-joystick/psp_joystick_math.h>
 #include <tokyo2006/psp-joystick/psp_joystick_state.h>
 
@@ -43,6 +46,7 @@ struct psp_joystick_config {
     bool swap_xy;
     bool arrow_mode;
     uint8_t arrow_threshold_percent;
+    int8_t arrow_layer;
     bool has_dt_center;
     int16_t dt_center_x;
     int16_t dt_center_y;
@@ -70,6 +74,7 @@ struct psp_joystick_data {
     bool skip_auto_center;
     uint16_t recenter_count;
     uint8_t arrow_dir;
+    bool layer_arrow_active;
     bool reported_nonzero;
     bool adc_error_logged;
     bool ema_valid;
@@ -416,7 +421,7 @@ static void psp_joystick_work_cb(struct k_work *work) {
 
     psp_joystick_apply_transforms(&x, &y, state->swap_xy, state->invert_x, state->invert_y);
 
-    if (state->arrow_mode) {
+    if (state->arrow_mode || data->layer_arrow_active) {
         int32_t threshold = (int32_t)state->arrow_threshold_percent * PSP_HALF_SCALE / 100;
         int32_t ax = abs((int32_t)x);
         int32_t ay = abs((int32_t)y);
@@ -516,6 +521,29 @@ static int psp_joystick_init(const struct device *dev) {
     return 0;
 }
 
+static int psp_joystick_layer_listener(const zmk_event_t *eh) {
+    const struct zmk_layer_state_changed *ev = as_zmk_layer_state_changed(eh);
+    if (ev == NULL) {
+        return ZMK_EV_EVENT_BUBBLE;
+    }
+
+    const struct device *dev = DEVICE_DT_GET_ANY(tokyo2006_psp_joystick);
+    if (dev == NULL) {
+        return ZMK_EV_EVENT_BUBBLE;
+    }
+
+    const struct psp_joystick_config *config = dev->config;
+    struct psp_joystick_data *data = dev->data;
+    if (config->arrow_layer >= 0 && ev->layer == (uint8_t)config->arrow_layer) {
+        data->layer_arrow_active = ev->state;
+    }
+
+    return ZMK_EV_EVENT_BUBBLE;
+}
+
+ZMK_LISTENER(psp_joystick_layer, psp_joystick_layer_listener);
+ZMK_SUBSCRIPTION(psp_joystick_layer, zmk_layer_state_changed);
+
 #define PSP_JOYSTICK_INST(n)                                                                       \
     static const struct psp_joystick_config psp_joystick_config_##n = {                            \
         .adc_x = ADC_DT_SPEC_INST_GET_BY_IDX(n, 0),                                                \
@@ -530,6 +558,7 @@ static int psp_joystick_init(const struct device *dev) {
         .swap_xy = DT_INST_PROP_OR(n, swap_xy, 0),                                                 \
         .arrow_mode = DT_INST_PROP_OR(n, arrow_mode, 0),                                           \
         .arrow_threshold_percent = DT_INST_PROP_OR(n, arrow_threshold_percent, 50),                \
+        .arrow_layer = DT_INST_PROP_OR(n, arrow_layer, -1),                                        \
         .has_dt_center = DT_INST_NODE_HAS_PROP(n, center_x) && DT_INST_NODE_HAS_PROP(n, center_y), \
         .dt_center_x = DT_INST_PROP_OR(n, center_x, PSP_JOYSTICK_CENTER_DEFAULT),                  \
         .dt_center_y = DT_INST_PROP_OR(n, center_y, PSP_JOYSTICK_CENTER_DEFAULT),                  \
