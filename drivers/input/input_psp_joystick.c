@@ -521,6 +521,7 @@ static int psp_joystick_init(const struct device *dev) {
     return 0;
 }
 
+#if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 static int psp_joystick_layer_listener(const zmk_event_t *eh) {
     const struct zmk_layer_state_changed *ev = as_zmk_layer_state_changed(eh);
     if (ev == NULL) {
@@ -543,6 +544,7 @@ static int psp_joystick_layer_listener(const zmk_event_t *eh) {
 
 ZMK_LISTENER(psp_joystick_layer, psp_joystick_layer_listener);
 ZMK_SUBSCRIPTION(psp_joystick_layer, zmk_layer_state_changed);
+#endif /* central or unibody: split peripherals have no local layer state */
 
 #define PSP_JOYSTICK_INST(n)                                                                       \
     static const struct psp_joystick_config psp_joystick_config_##n = {                            \
